@@ -1,6 +1,9 @@
+import { useState } from "react";
 import "./App.css";
 
 function App() {
+  const [activeGame, setActiveGame] = useState<1 | 2>(1);
+
   return (
     <>
       <header className="header">
@@ -8,7 +11,15 @@ function App() {
       </header>
       <main className="outsidemain">
         <main className="main">
-          <div className="gamebox"></div>
+          <p className="game-title">{activeGame === 1 ? "Sudoku" : "Queens"}</p>
+          <div className="gamebox">
+            {activeGame === 1 && <div className="sudoku-grid"></div>}
+            {activeGame === 2 && <div className="queens-grid"></div>}
+          </div>
+          <div className="game-buttons">
+            <button onClick={() => setActiveGame(1)}>Sudoku</button>
+            <button onClick={() => setActiveGame(2)}>Queens</button>
+          </div>
         </main>
       </main>
     </>
