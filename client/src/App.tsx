@@ -1,20 +1,17 @@
-import { useState, useEffect } from "react";
+import "./App.css";
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.status))
-      .catch(() => setMessage("Could not reach server"));
-  }, []);
-
   return (
-    <div>
-      <h1>Dailydle</h1>
-      <p>Server status: {message || "loading..."}</p>
-    </div>
+    <>
+      <header className="header">
+        <h1>Dailydle</h1>
+      </header>
+      <main className="outsidemain">
+        <main className="main">
+          <div className="gamebox"></div>
+        </main>
+      </main>
+    </>
   );
 }
 
