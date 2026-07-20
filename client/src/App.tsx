@@ -1,8 +1,10 @@
 import { useState } from "react";
 import "./App.css";
+import { Grid, createEmptyGrid, getCell, setCell } from "./SudokuLogic";
 
 function App() {
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
+  const [grid, setGrid] = useState<Grid>(createEmptyGrid);
 
   return (
     <>
@@ -27,8 +29,13 @@ function App() {
                           <div
                             className="sudoku-cell"
                             key={cellIndex}
-                            onClick={() => console.log(`Row: ${row + 1}, Col: ${col + 1}`)}
-                          ></div>
+                            onClick={() => {
+                              const next = (getCell(grid, row, col) ?? 0) % 6 + 1;
+                              setGrid(setCell(grid, row, col, next));
+                            }}
+                          >
+                            {getCell(grid, row, col) ?? ""}
+                          </div>
                         );
                       })}
                     </div>
