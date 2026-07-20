@@ -15,13 +15,25 @@ function App() {
           <div className="gamebox">
             {activeGame === 1 && (
               <div className="sudoku-grid">
-                {[...Array(6)].map((_, blockIndex) => (
-                  <div className="sudoku-block" key={blockIndex}>
-                    {[...Array(6)].map((_, cellIndex) => (
-                      <div className="sudoku-cell" key={cellIndex}></div>
-                    ))}
-                  </div>
-                ))}
+                {[...Array(6)].map((_, blockIndex) => {
+                  const blockCol = blockIndex % 2;
+                  const blockRow = Math.floor(blockIndex / 2);
+                  return (
+                    <div className="sudoku-block" key={blockIndex}>
+                      {[...Array(6)].map((_, cellIndex) => {
+                        const col = blockCol * 3 + (cellIndex % 3);
+                        const row = blockRow * 2 + Math.floor(cellIndex / 3);
+                        return (
+                          <div
+                            className="sudoku-cell"
+                            key={cellIndex}
+                            onClick={() => console.log(`Row: ${row + 1}, Col: ${col + 1}`)}
+                          ></div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {activeGame === 2 && <div className="queens-grid"></div>}
