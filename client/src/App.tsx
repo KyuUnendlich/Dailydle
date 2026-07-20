@@ -13,7 +13,17 @@ function App() {
         <main className="main">
           <p className="game-title">{activeGame === 1 ? "Sudoku" : "Queens"}</p>
           <div className="gamebox">
-            {activeGame === 1 && <div className="sudoku-grid"></div>}
+            {activeGame === 1 && (
+              <div className="sudoku-grid">
+                {[...Array(6)].map((_, blockIndex) => (
+                  <div className="sudoku-block" key={blockIndex}>
+                    {[...Array(6)].map((_, cellIndex) => (
+                      <div className="sudoku-cell" key={cellIndex}></div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
             {activeGame === 2 && <div className="queens-grid"></div>}
           </div>
           <div className="game-buttons">

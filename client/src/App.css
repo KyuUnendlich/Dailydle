@@ -37,7 +37,7 @@
 }
 
 .gamebox {
-  background-color: white;
+  background-color: black;
   width: 650px;
   height: 650px;
   border: 15px solid lightblue;
@@ -47,17 +47,32 @@
 
 .sudoku-grid {
   display: grid;
-  grid-template-columns: auto auto auto;
-  background-color: dodgerblue;
-  padding: 100px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  border: 3px solid black;
 }
 
-.sudoku-grid div {
-  background-color: #f1f1f1;
+.sudoku-block {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.sudoku-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
   border: 1px solid black;
-  padding: 10px;
-  font-size: 30px;
-  text-align: center;
+  background: white;
+  cursor: pointer;
+}
+
+.sudoku-cell:hover {
+  background: lightblue;
 }
 
 .queens-grid {
