@@ -7,24 +7,54 @@ type Coordinate = [row: number, column: number];
 const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
 
 export function createEmptyGrid(): Grid {
-  	const Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
-	for (let i = 0; i < 6; i++) {
-		for (let j = 0; j < 6; j++) {
-			let validNumberArray: number[] = getValidNextNumber(Grid, i, j)
-			if (validNumberArray.length !== 0) {
-				let nextNumberId: number = getRandomInt(0, validNumberArray.length - 1);
-				Grid[i][j] = validNumberArray[nextNumberId];
+	while (true) {
+		const grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
+		for (let i = 0; i < 6; i++) {
+			for (let j = 0; j < 6; j++) {
+				let validNumberArray: number[] = getValidNextNumber(grid, i, j)
+				if (validNumberArray.length !== 0) {
+					let nextNumberId: number = getRandomInt(0, validNumberArray.length - 1);
+					grid[i][j] = validNumberArray[nextNumberId];
+				}
+			}
+		}
+
+		if (doCorrectionAlgorithm(grid)) {
+			if (CheckGrid(grid)) {
+				console.log("Grid correct")
+				return grid;
 			}
 		}
 	}
-
-	let success = doCorrectionAlgorithm(Grid);
-  	if (success) {
-		// write DoubleCheck method
-	}
-
-  	return Grid;
 }
+
+function CheckGrid(grid: Grid): boolean {
+	// Lazy Checker (this should catch everything, right?)
+	let correctness = true;
+	for (let i = 0; i < 6; i++) {
+		let amountRow: number = 0
+		let amountColumn: number = 0
+		let amountBox: number = 0
+
+		for (let j = 0; j < 6; j++) {
+			if (grid[i][j] !== null){
+				amountRow += grid[i][j] ?? 0;
+				amountColumn += grid[j][i] ?? 0;
+			}
+		}
+
+		getBoxCoordinatesById(i).forEach(element => {
+			amountBox += grid[element[0]][element[1]] ?? 0;
+		});
+
+		if (amountRow !== 21 || amountColumn !== 21 || amountBox !== 21){
+			correctness = false;
+		}
+	}
+	return correctness
+}
+
+
 
 function doCorrectionAlgorithm(grid: Grid): boolean {
 	// Find 2 Empty Cells and switch cell numbers in adjacent boxes 
@@ -70,7 +100,6 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 		}
 	} else {
 		console.log("big break")
-		createEmptyGrid(); //redo
 		return false;
 	}
 
