@@ -8,7 +8,7 @@ const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
 
 export function createEmptyGrid(): Grid {
 	while (true) {
-		const grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
+		let grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
 		for (let i = 0; i < 6; i++) {
 			for (let j = 0; j < 6; j++) {
 				let validNumberArray: number[] = getValidNextNumber(grid, i, j)
@@ -25,7 +25,63 @@ export function createEmptyGrid(): Grid {
 				return grid;
 			}
 		}
+
+		const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
+		let emptyCells: number = 0;
+
+		for (let i = 0; i < 20; i++){
+			let clearRowId: number = getRandomInt(0, 5);
+			let clearColumnId: number = getRandomInt(0, 5);
+			let grid_copy = grid;
+			grid = grid_copy;
+
+			grid[clearRowId][clearColumnId] = null;
+			emptyCells++;
+			
+			if (!CheckIfOneSolution(grid, emptyCells)){
+				grid = grid_copy;
+			}
+			clearedCells[clearRowId][clearColumnId] = true;
+		}
+
 	}
+}
+
+function CheckIfOneSolution(grid: Grid, emptyCells: number): boolean {
+
+	//Global Structure that tracks row / column / box fill state, maybe a stable structure, 
+	//algorithm that prioritiues choosing a row of 5 to fill, leaving only multi options at the end
+	// think about what the exit condition is / debug early with examples
+	while (emptyCells >= 0) {	
+		for (let i = 0; i < 6; i++) {
+		let amountRow: number = 0
+		let amountColumn: number = 0
+		let amountBox: number = 0
+
+		for (let j = 0; j < 6; j++) {
+			let missingNumbersID: number[] = new Array(6).fill(99); // Save the value of the row / column cell
+			if (grid[i][j] !== null){
+				amountRow++;
+			} else {
+				missingNumbersID[j] = grid[i][j]!; // Saves number X (grid[i][j]) from column j
+			}
+
+			if (amountRow === 5){
+				missingNumbersID.forEach((element, k) => {
+					if (element !== 99) {
+						grid[i][k] = element[k];
+					}
+				});
+			}
+		}
+
+		getBoxCoordinatesById(i).forEach(element => {
+			amountBox += grid[element[0]][element[1]] ?? 0;
+		});
+
+		}
+	}
+	return true;
 }
 
 function CheckGrid(grid: Grid): boolean {
