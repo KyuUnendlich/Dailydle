@@ -5,7 +5,12 @@ const seedRngUsed: boolean = false;
 export type Grid = (number | null)[][];
 type Coordinate = [row: number, column: number];
 const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
+
+let fillAmountRows: number[] = new Array(6);
+let fillAmountColumns: number[] = new Array(6);
+let fillAmountBoxes: number[] = new Array(6);
 let emptyCells: number = 0;
+
 
 export function createEmptyGrid(): Grid {
 	while (true) {
@@ -23,42 +28,40 @@ export function createEmptyGrid(): Grid {
 		if (doCorrectionAlgorithm(grid)) {
 			if (CheckGrid(grid)) {
 				console.log("Grid correct")
-				//return grid;
+
+				const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
+
+				for (let i = 0; i < 10; i++){
+					let clearRowId: number = getRandomInt(0, 5);
+					let clearColumnId: number = getRandomInt(0, 5);
+					let grid_copy = structuredClone(grid);
+
+					if (clearedCells[clearRowId][clearColumnId] === true) {
+						let rng01: number = getRandomInt(0, 1);
+						i -= rng01;
+					}
+
+					grid[clearRowId][clearColumnId] = null;
+					console.log("Tried to remove cell "+ clearRowId + " " + clearColumnId)
+					emptyCells++;
+					
+					if (!CheckIfOneSolution(grid, emptyCells)){
+						grid = grid_copy;
+						emptyCells--;
+					}
+					clearedCells[clearRowId][clearColumnId] = true;
+				}
+				return grid;
 			}
 		}
-
-		const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
-
-		for (let i = 0; i < 10; i++){
-			let clearRowId: number = getRandomInt(0, 5);
-			let clearColumnId: number = getRandomInt(0, 5);
-			let grid_copy = structuredClone(grid);
-
-			if (clearedCells[clearRowId][clearColumnId] === true) {
-				let rng01: number = getRandomInt(0, 1);
-				i -= rng01;
-			}
-
-			grid[clearRowId][clearColumnId] = null;
-			console.log("Removed Cell "+ clearRowId + " " + clearColumnId)
-			emptyCells++;
-			
-			if (!CheckIfOneSolution(grid, emptyCells)){
-				grid = grid_copy;
-				emptyCells--;
-				console.log("Found Duplicate Solution")
-			}
-			clearedCells[clearRowId][clearColumnId] = true;
-		}
-		return grid;
 	}
 }
 
 function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 
-	let fillAmountRows: number[] = new Array(6);
-	let fillAmountColumns: number[] = new Array(6);
-	let fillAmountBoxes: number[] = new Array(6);
+	fillAmountRows = new Array(6);
+	fillAmountColumns = new Array(6);
+	fillAmountBoxes = new Array(6);
 
 	for (let i = 0; i < 6; i++) {
 		for (let j = 0; j < 6; j++) {
@@ -74,10 +77,11 @@ function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 		});
 	}
 	while (emptyCellsLocal >= 0) {
-		if (FillNextPossibleCell(grid, emptyCellsLocal, fillAmountRows, fillAmountColumns, fillAmountBoxes)) {
+		if (FillNextPossibleCell(grid)) {
 			emptyCellsLocal--;
 			console.log("Cell filled")
 		} else {
+			console.log("Found Duplicate Solution")
 			return false;
 		}
 	}
@@ -85,11 +89,12 @@ function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 	return true;
 }
 
-function FillNextPossibleCell(grid: Grid, emptyCellsLocal: number, fillAmountRows: number[], fillAmountColumns: number[], fillAmountBoxes: number[]): boolean{
+function FillNextPossibleCell(grid: Grid): boolean{
 	let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
 	
 	fillAmountRows.forEach((element, i) => {
 		if (element === 5) {
+			console.log("hi")
 			let missingNumber: number = -1;
 			//Find Missing Number
 			for (let j = 0; j < 6; j++) {
@@ -101,13 +106,16 @@ function FillNextPossibleCell(grid: Grid, emptyCellsLocal: number, fillAmountRow
 			}
 			//Set Value
 			grid[i][missingNumber] = allPossiblenumbers[0];
-			fillAmountRows
+			fillAmountRows[i]++;
+			fillAmountColumns[missingNumber]++;
+			fillAmountBoxes[getMyBox([i,missingNumber])]
 			return true;
 		}
 	});
 
 	fillAmountColumns.forEach((element, i) => {
 		if (element === 5) {
+			console.log("hi")
 			let missingNumber: number = -1;
 			//Find Missing Number
 			for (let j = 0; j < 6; j++) {
@@ -119,12 +127,16 @@ function FillNextPossibleCell(grid: Grid, emptyCellsLocal: number, fillAmountRow
 			}
 			//Set Value
 			grid[missingNumber][i] = allPossiblenumbers[0];
+			fillAmountRows[missingNumber]++;
+			fillAmountColumns[i]++;
+			fillAmountBoxes[getMyBox([missingNumber,i])]
 			return true;
 		}
 	});
 
 	fillAmountBoxes.forEach((element, i) => {
 		if (element === 5) {
+			console.log("hi")
 			let boxArray = getBoxCoordinatesById(i);
 
 			let missingNumber: number = -1;
@@ -138,6 +150,9 @@ function FillNextPossibleCell(grid: Grid, emptyCellsLocal: number, fillAmountRow
 			}
 			//Set Value
 			grid[boxArray[missingNumber][0]][boxArray[missingNumber][1]] = allPossiblenumbers[0];
+			fillAmountRows[boxArray[missingNumber][0]]++;
+			fillAmountColumns[boxArray[missingNumber][1]]++;
+			fillAmountBoxes[i]++;
 			return true;
 
 		}
