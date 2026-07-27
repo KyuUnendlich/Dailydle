@@ -5,6 +5,7 @@ const seedRngUsed: boolean = false;
 export type Grid = (number | null)[][];
 type Coordinate = [row: number, column: number];
 const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
+let emptyCells: number = 0;
 
 export function createEmptyGrid(): Grid {
 	while (true) {
@@ -27,19 +28,19 @@ export function createEmptyGrid(): Grid {
 		}
 
 		const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
-		let emptyCells: number = 0;
 
-		for (let i = 0; i < 20; i++){
+		for (let i = 0; i < 5; i++){
 			let clearRowId: number = getRandomInt(0, 5);
 			let clearColumnId: number = getRandomInt(0, 5);
 			let grid_copy = grid;
-			grid = grid_copy;
 
 			grid[clearRowId][clearColumnId] = null;
+			console.log("Removed Cell "+ clearRowId + " " + clearColumnId)
 			emptyCells++;
 			
 			if (!CheckIfOneSolution(grid, emptyCells)){
 				grid = grid_copy;
+				console.log("Found Duplicate Solution")
 			}
 			clearedCells[clearRowId][clearColumnId] = true;
 		}
@@ -48,6 +49,92 @@ export function createEmptyGrid(): Grid {
 }
 
 function CheckIfOneSolution(grid: Grid, emptyCells: number): boolean {
+
+	let fillAmountRows: number[] = new Array(6);
+	let fillAmountColumns: number[] = new Array(6);
+	let fillAmountBoxes: number[] = new Array(6);
+
+	for (let i = 0; i < 6; i++) {
+		for (let j = 0; j < 6; j++) {
+			if (grid[i][j] !== null) {
+				fillAmountRows[i]++;
+				fillAmountColumns[j]++;
+			}
+		}
+		getBoxCoordinatesById(i).forEach(element => {
+			if (grid[element[0]][element[1]] !== null) {
+				fillAmountBoxes[i]++;
+			}
+		});
+	}
+	while (emptyCells >= 0) {	
+		FillNextPossibleCell(grid, emptyCells, fillAmountRows, fillAmountColumns, fillAmountBoxes);
+		return true
+	}
+	return false;
+}
+
+function FillNextPossibleCell(grid: Grid, emptyCells: number, fillAmountRows: number[], fillAmountColumns: number[], fillAmountBoxes: number[]): boolean{
+	let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
+	
+	fillAmountRows.forEach((element, i) => {
+		if (element === 5) {
+			let missingNumber: number = -1;
+			//Find Missing Number
+			for (let j = 0; j < 6; j++) {
+				if (grid[i][j] !== null) {
+					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[i][j])
+				} else {
+					missingNumber = j
+				}
+			}
+			//Set Value
+			grid[i][missingNumber] = allPossiblenumbers[0];
+			return true;
+		}
+	});
+
+	fillAmountColumns.forEach((element, i) => {
+		if (element === 5) {
+			let missingNumber: number = -1;
+			//Find Missing Number
+			for (let j = 0; j < 6; j++) {
+				if (grid[j][i] !== null) {
+					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[j][i])
+				} else {
+					missingNumber = j
+				}
+			}
+			//Set Value
+			grid[missingNumber][i] = allPossiblenumbers[0];
+			return true;
+		}
+	});
+
+	fillAmountBoxes.forEach((element, i) => {
+		if (element === 5) {
+			let boxArray = getBoxCoordinatesById(i);
+
+			let missingNumber: number = -1;
+			//Find Missing Number
+			for (let j = 0; j < 6; j++) {
+				if (boxArray[j] !== null) {
+					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[boxArray[j][0]][boxArray[j][1]])
+				} else {
+					missingNumber = j
+				}
+			}
+			//Set Value
+			grid[boxArray[missingNumber][0]][boxArray[missingNumber][1]] = allPossiblenumbers[0];
+			return true;
+
+		}
+	});
+	return false;
+}
+
+	function old(grid: Grid) {
+
 
 	//Global Structure that tracks row / column / box fill state, maybe a stable structure, 
 	//algorithm that prioritiues choosing a row of 5 to fill, leaving only multi options at the end
@@ -69,7 +156,7 @@ function CheckIfOneSolution(grid: Grid, emptyCells: number): boolean {
 			if (amountRow === 5){
 				missingNumbersID.forEach((element, k) => {
 					if (element !== 99) {
-						grid[i][k] = element[k];
+						//grid[i][k] = element[k];
 					}
 				});
 			}
@@ -123,7 +210,7 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 	for (let i = 0; i < 6; i++) {
 		for (let j = 0; j < 6; j++) {
 			if (grid[i][j] === null){
-				console.log(i+1 + "   " + j+1)
+				//console.log(i+1 + "   " + j+1)
 				emptyNumbers.push(i)
 				emptyNumbers.push(j)
 			} else {
@@ -138,12 +225,12 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 	}
 
 	if (emptyNumbers.length === 0) {
-		console.log("nothing broken")
+		//console.log("nothing broken")
 		return true;
 	}
 	
 	
-	console.log(emptyNumbers.toString() + "lets fix this")
+	//console.log(emptyNumbers.toString() + "lets fix this")
 
 	let missingNumbers: number[] = []; // missing numbers by box logic
 
@@ -155,11 +242,11 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 			}
 		}
 	} else {
-		console.log("big break")
+		//console.log("big break")
 		return false;
 	}
 
-	console.log(missingNumbers.toString())
+	//console.log(missingNumbers.toString())
 
 	let boxToFlip: number = 999;
 	if (getMyBox([emptyNumbers[0],emptyNumbers[1]]) === getMyBox([emptyNumbers[2],emptyNumbers[3]])){
@@ -190,15 +277,15 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 		}
 	}
 
-	console.log(boxToFlip + "flipped")
+	//console.log(boxToFlip + "flipped")
 
 	getBoxCoordinatesById(boxToFlip).forEach(element => {
 		if (grid[element[0]][element[1]] === missingNumbers[0]) {
 			grid[element[0]][element[1]] = missingNumbers[1];
-			console.log(grid[element[0]][element[1]] + " + " + missingNumbers[0])
+			//console.log(grid[element[0]][element[1]] + " + " + missingNumbers[0])
 		} else if (grid[element[0]][element[1]] === missingNumbers[1]) {
 			grid[element[0]][element[1]] = missingNumbers[0];
-			console.log(grid[element[0]][element[1]] + " + " + missingNumbers[1])
+			//console.log(grid[element[0]][element[1]] + " + " + missingNumbers[1])
 		}
 	});
 
@@ -335,37 +422,3 @@ export const setCell = (grid: Grid, row: number, col: number, value: number | nu
   next[row][col] = value;
   return next;
 };
-
-//Create Full Board, remove one cell and check whether there is another solution
-	//pick new possible content for the removed cell, and try to complete it 
-		//when choosing new cell content, check for basic conditions (row, column, 3x3)
-	//skip first 9 removed cells, should always be completable without them
-		//try skipping more than 9, does 25 work for example
-	//remember which cells are not allowed to be removed because they allow multiple solutions
-	//idea: remove multiple cells simultaneously
-	//to fill in cells, look for row, column, 3x3 which have a lot of entries
-	
-
-/** 
-	if (emptyNumbers.length === 4) {
-		for (let emp = 0; emp < 2; emp++) {
-			let foundNumbersInBox: number[] = [];
-
-			let boxCoords = getBoxCoordinates([emptyNumbers[emp*2],emptyNumbers[emp*2+1]])
-			boxCoords.forEach(coord => {
-				foundNumbersInBox.push(grid[coord[0]][coord[1]] ?? 0)
-			});
-			console.log(foundNumbersInBox.toString())
-			
-			const missingNumber: number[] = BaseNumbers.filter(function (num) {
-				return !foundNumbersInBox.includes(num)
-			});
-			console.log(missingNumber.toString())
-			missingNumbers.push(missingNumber.pop()!);
-		}
-	} else {
-		console.log("big break")
-		createEmptyGrid(); //redo
-		return false;
-	}
-		*/
