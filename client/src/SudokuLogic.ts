@@ -129,6 +129,9 @@ function CheckGrid(grid: Grid): boolean {
 
 
 function doCorrectionAlgorithm(grid: Grid): boolean {
+	//This is honestly probably less efficient than just creating a new grid and hoping the next one generates correctly (~15% chance)
+	//i like this too much though so ill keep it in, even if it only solves half the failed grids
+
 	// Find 2 Empty Cells and switch cell numbers in adjacent boxes 
 		// Find Logical Missing numbers in the respective Boxes
 		// Find a singular box that is either in the same box-row or box-column and flip the numbers there   
