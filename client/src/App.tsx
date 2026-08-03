@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { SudokuGame, createEmptyGrid, getCell, setCell } from "./SudokuLogic";
+import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
 
 type Coordinate = { row: number; col: number };
 
 function App() {
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
-  const [game, setGame] = useState<SudokuGame>(createEmptyGrid);
+  const [game, setGame] = useState<SudokuGame>(generatePuzzle);
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
 
   const handleCellClick = (row: number, col: number) => {

@@ -4,20 +4,13 @@ const seedRngUsed: boolean = false;
 
 export type Grid = (number | null)[][];
 type Coordinate = [row: number, column: number];
-//let correctSudokuGrid: Grid;
 export interface SudokuGame {
   puzzle: Grid;
   solution: Grid;
 }
-//const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
-
-let fillAmountRows: number[] = new Array(6);
-let fillAmountColumns: number[] = new Array(6);
-let fillAmountBoxes: number[] = new Array(6);
-let emptyCells: number = 0;
 
 
-export function createEmptyGrid(): SudokuGame {
+export function generatePuzzle(): SudokuGame {
 	while (true) {
 		let grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
 		for (let i = 0; i < 6; i++) {
@@ -36,6 +29,7 @@ export function createEmptyGrid(): SudokuGame {
 				const solution = structuredClone(grid);
 
 				const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
+				let emptyCells: number = 0;
 
 				for (let i = 0; i < 25; i++){
 					let clearRowId: number = getRandomInt(0, 5);
@@ -73,9 +67,9 @@ export function createEmptyGrid(): SudokuGame {
 
 function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 
-	fillAmountRows = new Array(6).fill(0);
-	fillAmountColumns = new Array(6).fill(0);
-	fillAmountBoxes = new Array(6).fill(0);
+	const fillAmountRows: number[] = new Array(6).fill(0);
+	const fillAmountColumns: number[] = new Array(6).fill(0);
+	const fillAmountBoxes: number[] = new Array(6).fill(0);
 
 	for (let i = 0; i < 6; i++) {
 		for (let j = 0; j < 6; j++) {
@@ -92,7 +86,7 @@ function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 	}
 
 	while (emptyCellsLocal > 0) {
-		if (FillNextPossibleCell(grid)) {
+		if (FillNextPossibleCell(grid, fillAmountRows, fillAmountColumns, fillAmountBoxes)) {
 			emptyCellsLocal--;
 			console.log("Cell filled, cells still empty: " + emptyCellsLocal)
 		} else {
@@ -104,7 +98,7 @@ function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
 	return true;
 }
 
-function FillNextPossibleCell(grid: Grid): boolean{
+function FillNextPossibleCell(grid: Grid, fillAmountRows: number[], fillAmountColumns: number[], fillAmountBoxes: number[]): boolean {
 	for (let i = 0; i < fillAmountRows.length; i++) {
 		if (fillAmountRows[i] === 5) {
 			let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
@@ -169,29 +163,35 @@ function FillNextPossibleCell(grid: Grid): boolean{
 }
 
 function CheckGrid(grid: Grid): boolean {
-	// Lazy Checker (this should catch everything, right?)
-	let correctness = true;
 	for (let i = 0; i < 6; i++) {
-		let amountRow: number = 0
-		let amountColumn: number = 0
-		let amountBox: number = 0
-
+		const rowSet: Set<number> = new Set();
+		const columnSet: Set<number> = new Set();
 		for (let j = 0; j < 6; j++) {
-			if (grid[i][j] !== null){
-				amountRow += grid[i][j] ?? 0;
-				amountColumn += grid[j][i] ?? 0;
+			const rowValue = grid[i][j];
+			const columnValue = grid[j][i];
+			if (rowValue === null || columnValue === null) {
+				return false;
 			}
+			rowSet.add(rowValue);
+			columnSet.add(columnValue);
+		}
+		if (rowSet.size !== 6 || columnSet.size !== 6) {
+			return false;
 		}
 
+		const boxSet: Set<number> = new Set();
 		getBoxCoordinatesById(i).forEach(element => {
-			amountBox += grid[element[0]][element[1]] ?? 0;
+			const value = grid[element[0]][element[1]];
+			if (value === null) {
+				return;
+			}
+			boxSet.add(value);
 		});
-
-		if (amountRow !== 21 || amountColumn !== 21 || amountBox !== 21){
-			correctness = false;
+		if (boxSet.size !== 6) {
+			return false;
 		}
 	}
-	return correctness
+	return true;
 }
 
 
