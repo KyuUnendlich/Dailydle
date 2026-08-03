@@ -25,11 +25,9 @@ export function generatePuzzle(): SudokuGame {
 
 		if (doCorrectionAlgorithm(grid)) {
 			if (CheckGrid(grid)) {
-				console.log("Grid correct")
 				const solution = structuredClone(grid);
 
 				const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
-				let emptyCells: number = 0;
 
 				for (let i = 0; i < 25; i++){
 					let clearRowId: number = getRandomInt(0, 5);
@@ -37,24 +35,16 @@ export function generatePuzzle(): SudokuGame {
 
 					if (clearedCells[clearRowId][clearColumnId] === true) {
 						let rng01: number = getRandomInt(0, 1);
-						console.log("FAILED Tried to remove cell again "+ clearRowId + " " + clearColumnId)
 						i -= rng01; // Try again sometimes
 					} else {
 
-						let grid_copy = structuredClone(grid);
-
+						// try clearing a cell
+						const originalValue = grid[clearRowId][clearColumnId];
 						grid[clearRowId][clearColumnId] = null;
-						console.log("Tried to remove cell "+ clearRowId + " " + clearColumnId)
-						emptyCells++;
-						
-						if (!CheckIfOneSolution(grid, emptyCells)){
-							grid = grid_copy;
-							emptyCells--;
-						} else {
-							grid = grid_copy;
-							grid[clearRowId][clearColumnId] = null;
+						if (countSolutions(grid) !== 1) {
+							grid[clearRowId][clearColumnId] = originalValue; // not unique → restore
 						}
-
+						// if it returned 1, keep it cleared
 						clearedCells[clearRowId][clearColumnId] = true;
 
 					}
@@ -65,101 +55,43 @@ export function generatePuzzle(): SudokuGame {
 	}
 }
 
-function CheckIfOneSolution(grid: Grid, emptyCellsLocal: number): boolean {
-
-	const fillAmountRows: number[] = new Array(6).fill(0);
-	const fillAmountColumns: number[] = new Array(6).fill(0);
-	const fillAmountBoxes: number[] = new Array(6).fill(0);
-
-	for (let i = 0; i < 6; i++) {
-		for (let j = 0; j < 6; j++) {
-			if (grid[i][j] !== null) {
-				fillAmountRows[i]++;
-				fillAmountColumns[j]++;
-			}
+function countSolutions(grid: Grid, maxSolutions: number = 2): number {
+  	// 1. Find the first empty cell
+	let row = -1, col = -1;
+	for (let r = 0; r < 6; r++) {
+		for (let c = 0; c < 6; c++) {
+		if (grid[r][c] === null) { row = r; col = c; break; }
 		}
-		getBoxCoordinatesById(i).forEach(element => {
-			if (grid[element[0]][element[1]] !== null) {
-				fillAmountBoxes[i]++;
-			}
-		});
+		if (row !== -1) break;
 	}
-
-	while (emptyCellsLocal > 0) {
-		if (FillNextPossibleCell(grid, fillAmountRows, fillAmountColumns, fillAmountBoxes)) {
-			emptyCellsLocal--;
-			console.log("Cell filled, cells still empty: " + emptyCellsLocal)
-		} else {
-			console.log("Found Duplicate Solution")
-			return false;
+	// 2. No empty cell left -> we found a complete, valid solution
+	if (row === -1) return 1;
+	// 3. Try every candidate, counting how many lead to a solution
+	let count = 0;
+	for (let num = 1; num <= 6; num++) {
+		if (isValid(grid, row, col, num)) {
+		grid[row][col] = num;   // place
+		count += countSolutions(grid, maxSolutions); // recurse
+		grid[row][col] = null;  // backtrack (undo)
+		if (count >= maxSolutions) break; // early exit
 		}
 	}
-	console.log("Cell successfully removed")
-	return true;
+	return count;
 }
 
-function FillNextPossibleCell(grid: Grid, fillAmountRows: number[], fillAmountColumns: number[], fillAmountBoxes: number[]): boolean {
-	for (let i = 0; i < fillAmountRows.length; i++) {
-		if (fillAmountRows[i] === 5) {
-			let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
-			let missingNumber: number = -1;
-			//Find Missing Number
-			for (let j = 0; j < 6; j++) {
-				if (grid[i][j] !== null) {
-					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[i][j])
-				} else {
-					missingNumber = j
-				}
-			}
-			//Set Number and correct the grid
-			grid[i][missingNumber] = allPossiblenumbers[0];
-			fillAmountRows[i]++;
-			fillAmountColumns[missingNumber]++;
-			fillAmountBoxes[getMyBox([i,missingNumber])]++;
-			return true;
+function isValid(grid: Grid, row: number, col: number, num: number): boolean {
+	for (let i = 0; i < 6; i++) {
+		if (grid[row][i] === num) return false; // row
+		if (grid[i][col] === num) return false; // column
+	}
+	const boxRow = Math.floor(row / 2) * 2;
+	const boxCol = Math.floor(col / 3) * 3;
+	for (let r = boxRow; r < boxRow + 2; r++) {
+		for (let c = boxCol; c < boxCol + 3; c++) {
+		if (grid[r][c] === num) return false; // box
 		}
 	}
-
-	for (let i = 0; i < fillAmountColumns.length; i++) {
-		if (fillAmountColumns[i] === 5) {
-			let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
-			let missingNumber: number = -1;
-			for (let j = 0; j < 6; j++) {
-				if (grid[j][i] !== null) {
-					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[j][i])
-				} else {
-					missingNumber = j
-				}
-			}
-			grid[missingNumber][i] = allPossiblenumbers[0];
-			fillAmountRows[missingNumber]++;
-			fillAmountColumns[i]++;
-			fillAmountBoxes[getMyBox([missingNumber,i])]++;
-			return true;
-		}
-	}
-
-	for (let i = 0; i < fillAmountBoxes.length; i++) {
-		if (fillAmountBoxes[i] === 5) {
-			let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
-			let boxArray = getBoxCoordinatesById(i);
-
-			let missingNumber: number = -1;
-			for (let j = 0; j < 6; j++) {
-				if (grid[boxArray[j][0]][boxArray[j][1]] !== null) {
-					allPossiblenumbers = allPossiblenumbers.filter(item => item !== grid[boxArray[j][0]][boxArray[j][1]])
-				} else {
-					missingNumber = j
-				}
-			}
-			grid[boxArray[missingNumber][0]][boxArray[missingNumber][1]] = allPossiblenumbers[0];
-			fillAmountRows[boxArray[missingNumber][0]]++;
-			fillAmountColumns[boxArray[missingNumber][1]]++;
-			fillAmountBoxes[i]++;
-			return true;
-		}
-	}
-	return false;
+	return true;
 }
 
 function CheckGrid(grid: Grid): boolean {
@@ -207,7 +139,6 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 	for (let i = 0; i < 6; i++) {
 		for (let j = 0; j < 6; j++) {
 			if (grid[i][j] === null){
-				//console.log(i+1 + "   " + j+1)
 				emptyNumbers.push(i)
 				emptyNumbers.push(j)
 			} else {
@@ -222,12 +153,8 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 	}
 
 	if (emptyNumbers.length === 0) {
-		//console.log("nothing broken")
 		return true;
 	}
-	
-	
-	//console.log(emptyNumbers.toString() + "lets fix this")
 
 	let missingNumbers: number[] = []; // missing numbers by box logic
 
@@ -239,11 +166,8 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 			}
 		}
 	} else {
-		//console.log("big break")
 		return false;
 	}
-
-	//console.log(missingNumbers.toString())
 
 	let boxToFlip: number = 999;
 	if (getMyBox([emptyNumbers[0],emptyNumbers[1]]) === getMyBox([emptyNumbers[2],emptyNumbers[3]])){
@@ -274,15 +198,11 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 		}
 	}
 
-	//console.log(boxToFlip + "flipped")
-
 	getBoxCoordinatesById(boxToFlip).forEach(element => {
 		if (grid[element[0]][element[1]] === missingNumbers[0]) {
 			grid[element[0]][element[1]] = missingNumbers[1];
-			//console.log(grid[element[0]][element[1]] + " + " + missingNumbers[0])
 		} else if (grid[element[0]][element[1]] === missingNumbers[1]) {
 			grid[element[0]][element[1]] = missingNumbers[0];
-			//console.log(grid[element[0]][element[1]] + " + " + missingNumbers[1])
 		}
 	});
 
@@ -391,10 +311,6 @@ function getBoxCoordinatesById(id: number): Coordinate[]{
 			return []
 	}
 }
-
-
-
-
 
 
 
