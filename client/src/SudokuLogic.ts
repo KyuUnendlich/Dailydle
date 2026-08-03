@@ -4,7 +4,8 @@ const seedRngUsed: boolean = false;
 
 export type Grid = (number | null)[][];
 type Coordinate = [row: number, column: number];
-const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
+let correctSudokuGrid: Grid;
+//const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
 
 let fillAmountRows: number[] = new Array(6);
 let fillAmountColumns: number[] = new Array(6);
@@ -28,6 +29,7 @@ export function createEmptyGrid(): Grid {
 		if (doCorrectionAlgorithm(grid)) {
 			if (CheckGrid(grid)) {
 				console.log("Grid correct")
+				correctSudokuGrid = grid;
 
 				const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
 
@@ -160,44 +162,6 @@ function FillNextPossibleCell(grid: Grid): boolean{
 		}
 	}
 	return false;
-}
-
-	function old(grid: Grid) {
-
-
-	//Global Structure that tracks row / column / box fill state, maybe a stable structure, 
-	//algorithm that prioritiues choosing a row of 5 to fill, leaving only multi options at the end
-	// think about what the exit condition is / debug early with examples
-	while (emptyCells >= 0) {	
-		for (let i = 0; i < 6; i++) {
-		let amountRow: number = 0
-		let amountColumn: number = 0
-		let amountBox: number = 0
-
-		for (let j = 0; j < 6; j++) {
-			let missingNumbersID: number[] = new Array(6).fill(99); // Save the value of the row / column cell
-			if (grid[i][j] !== null){
-				amountRow++;
-			} else {
-				missingNumbersID[j] = grid[i][j]!; // Saves number X (grid[i][j]) from column j
-			}
-
-			if (amountRow === 5){
-				missingNumbersID.forEach((element, k) => {
-					if (element !== 99) {
-						//grid[i][k] = element[k];
-					}
-				});
-			}
-		}
-
-		getBoxCoordinatesById(i).forEach(element => {
-			amountBox += grid[element[0]][element[1]] ?? 0;
-		});
-
-		}
-	}
-	return true;
 }
 
 function CheckGrid(grid: Grid): boolean {
