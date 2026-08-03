@@ -75,9 +75,42 @@
   background: lightblue;
 }
 
+.sudoku-cell.selected {
+  background: lightblue;
+  box-shadow: inset 0 0 0 3px #667eea;
+}
+
 .queens-grid {
   width: 100%;
   height: 100%;
+}
+
+.number-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.number-button {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid lightblue;
+  background: white;
+  border-radius: 6px;
+}
+
+.number-button:hover,
+.number-button.selected {
+  background: lightblue;
+  color: white;
+}
+
+.number-button.disabled {
+  opacity: 0.4;
 }
 
 .game-buttons {

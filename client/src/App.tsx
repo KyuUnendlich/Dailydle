@@ -1,10 +1,49 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import { Grid, createEmptyGrid, getCell, setCell } from "./SudokuLogic";
+import { SudokuGame, createEmptyGrid, getCell, setCell } from "./SudokuLogic";
+
+type Coordinate = { row: number; col: number };
 
 function App() {
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
-  const [grid, setGrid] = useState<Grid>(createEmptyGrid);
+  const [game, setGame] = useState<SudokuGame>(createEmptyGrid);
+  const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
+
+  const handleCellClick = (row: number, col: number) => {
+    setSelectedCell({ row, col });
+  };
+
+  const handleNumberClick = (num: number) => {
+    if (selectedCell === null) return;
+    setGame((prev) => ({
+      ...prev,
+      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, num),
+    }));
+  };
+
+  const handleDeleteClick = () => {
+    if (selectedCell === null) return;
+    setGame((prev) => ({
+      ...prev,
+      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, null),
+    }));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault();
+        handleDeleteClick();
+        return;
+      }
+      const num = Number(event.key);
+      if (num >= 1 && num <= 6) {
+        handleNumberClick(num);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   return (
     <>
@@ -27,14 +66,15 @@ function App() {
                         const row = blockRow * 2 + Math.floor(cellIndex / 3);
                         return (
                           <div
-                            className="sudoku-cell"
+                            className={`sudoku-cell${
+                              selectedCell?.row === row && selectedCell?.col === col
+                                ? " selected"
+                                : ""
+                            }`}
                             key={cellIndex}
-                            onClick={() => {
-                              const next = (getCell(grid, row, col) ?? 0) % 6 + 1;
-                              setGrid(setCell(grid, row, col, next));
-                            }}
+                            onClick={() => handleCellClick(row, col)}
                           >
-                            {getCell(grid, row, col) ?? ""}
+                            {getCell(game.puzzle, row, col) ?? ""}
                           </div>
                         );
                       })}
@@ -45,6 +85,25 @@ function App() {
             )}
             {activeGame === 2 && <div className="queens-grid"></div>}
           </div>
+          {activeGame === 1 && (
+            <div className="number-buttons">
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <button
+                  key={num}
+                  className={`number-button${selectedCell !== null ? "" : " disabled"}`}
+                  onClick={() => handleNumberClick(num)}
+                >
+                  {num}
+                </button>
+              ))}
+              <button
+                className={`number-button${selectedCell !== null ? "" : " disabled"}`}
+                onClick={handleDeleteClick}
+              >
+                ⌫
+              </button>
+            </div>
+          )}
           <div className="game-buttons">
             <button onClick={() => setActiveGame(1)}>Sudoku</button>
             <button onClick={() => setActiveGame(2)}>Queens</button>

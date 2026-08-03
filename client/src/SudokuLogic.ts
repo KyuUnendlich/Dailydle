@@ -4,7 +4,11 @@ const seedRngUsed: boolean = false;
 
 export type Grid = (number | null)[][];
 type Coordinate = [row: number, column: number];
-let correctSudokuGrid: Grid;
+//let correctSudokuGrid: Grid;
+export interface SudokuGame {
+  puzzle: Grid;
+  solution: Grid;
+}
 //const BaseNumbers: number[] = [1, 2, 3, 4, 5, 6]
 
 let fillAmountRows: number[] = new Array(6);
@@ -13,7 +17,7 @@ let fillAmountBoxes: number[] = new Array(6);
 let emptyCells: number = 0;
 
 
-export function createEmptyGrid(): Grid {
+export function createEmptyGrid(): SudokuGame {
 	while (true) {
 		let grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
 		for (let i = 0; i < 6; i++) {
@@ -29,7 +33,7 @@ export function createEmptyGrid(): Grid {
 		if (doCorrectionAlgorithm(grid)) {
 			if (CheckGrid(grid)) {
 				console.log("Grid correct")
-				correctSudokuGrid = grid;
+				const solution = structuredClone(grid);
 
 				const clearedCells: boolean[][] = Array.from({ length: 6 }, () => Array(6).fill(false));
 
@@ -61,7 +65,7 @@ export function createEmptyGrid(): Grid {
 
 					}
 				}
-				return grid;
+				return { puzzle: grid, solution };
 			}
 		}
 	}
