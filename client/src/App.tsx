@@ -1,20 +1,34 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
+import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell, setCell as setQueensCell } from "./QueensLogic";
 
 type Coordinate = { row: number; col: number };
 
 function App() {
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
   const [game, setGame] = useState<SudokuGame>(generatePuzzle);
+  const [queensGame, setQueensGame] = useState<QueensGame>(generateQueens);
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
 
   const handleCellClick = (row: number, col: number) => {
     setSelectedCell({ row, col });
+    if (activeGame === 2) {
+      setQueensGame((prev) => ({
+        ...prev,
+        puzzle: setQueensCell(
+          prev.puzzle,
+          row,
+          col,
+          prev.puzzle[row][col] === null ? 1 : null
+        ),
+      }));
+    }
   };
 
   const handleNumberClick = (num: number) => {
     if (selectedCell === null) return;
+    if (activeGame !== 1) return;
     setGame((prev) => ({
       ...prev,
       puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, num),
@@ -23,6 +37,7 @@ function App() {
 
   const handleDeleteClick = () => {
     if (selectedCell === null) return;
+    if (activeGame !== 1) return;
     setGame((prev) => ({
       ...prev,
       puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, null),
@@ -83,7 +98,21 @@ function App() {
                 })}
               </div>
             )}
-            {activeGame === 2 && <div className="queens-grid"></div>}
+            {activeGame === 2 && (
+              <div className="queens-grid">
+                {[...Array(8)].map((_, row) =>
+                  [...Array(8)].map((_, col) => (
+                    <div
+                      className="queens-cell"
+                      key={`${row}-${col}`}
+                      onClick={() => handleCellClick(row, col)}
+                    >
+                      {getQueensCell(queensGame.puzzle, row, col) === 1 ? "Q" : ""}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
           {activeGame === 1 && (
             <div className="number-buttons">
