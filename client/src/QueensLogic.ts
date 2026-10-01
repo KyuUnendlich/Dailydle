@@ -15,7 +15,7 @@ export interface QueensGame {
 //}
 
 export function generatePuzzle(): QueensGame {
-  while (true) {
+  for (let attempt = 0; attempt < 100; attempt++) {
     let grid: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
     for (let i = 0; i < 8; i++) {
       for (let j = 0; j < 8; j++) {
@@ -25,7 +25,16 @@ export function generatePuzzle(): QueensGame {
         fillQueens(grid, availableRows, availableColumns, 0);
       }
     }
+
+    if (grid.every(row => row.every(cell => cell !== null))) {
+      const solution = structuredClone(grid);
+      const puzzle: Grid = grid.map(row => row.map(cell => (cell === null ? null : 1)));
+      return { puzzle, solution };
+    }
   }
+
+  const empty: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
+  return { puzzle: empty, solution: structuredClone(empty) };
 }
 
 function fillQueens(grid: Grid, availableRows: number[], availableColumns: number[], colorID: number): void {
@@ -56,7 +65,9 @@ function fillQueens(grid: Grid, availableRows: number[], availableColumns: numbe
     }
     foundSolution = true;
     grid[rngX][rngY] = colorID;
-    fillQueens(grid, newAvailableRows, newAvailableColumns, colorID + 1);
+    if (colorID < 7) {
+      fillQueens(grid, newAvailableRows, newAvailableColumns, colorID + 1);
+    }
   }
 }
 
