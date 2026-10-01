@@ -1,14 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
 import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell, setCell as setQueensCell } from "./QueensLogic";
 
 type Coordinate = { row: number; col: number };
 
+const emptyGrid = (size: number) =>
+  Array.from({ length: size }, () => Array<number | null>(size).fill(null));
+
+const emptySudoku = (): SudokuGame => ({
+  puzzle: emptyGrid(6),
+  solution: emptyGrid(6),
+});
+
+const emptyQueens = (): QueensGame => ({
+  puzzle: emptyGrid(8),
+  solution: emptyGrid(8),
+});
+
 function App() {
+  const sudokuGenerated = useRef(false);
+  const queensGenerated = useRef(false);
+
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
-  const [game, setGame] = useState<SudokuGame>(generatePuzzle);
-  const [queensGame, setQueensGame] = useState<QueensGame>(generateQueens);
+  const [game, setGame] = useState<SudokuGame>(() => {
+    if (sudokuGenerated.current) return emptySudoku();
+    sudokuGenerated.current = true;
+    return generatePuzzle();
+  });
+  const [queensGame, setQueensGame] = useState<QueensGame>(() => {
+    if (queensGenerated.current) return emptyQueens();
+    queensGenerated.current = true;
+    return generateQueens();
+  });
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
 
   const handleCellClick = (row: number, col: number) => {

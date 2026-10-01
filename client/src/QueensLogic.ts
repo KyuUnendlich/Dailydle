@@ -15,7 +15,7 @@ export interface QueensGame {
 //}
 
 export function generatePuzzle(): QueensGame {
-  for (let attempt = 0; attempt < 1; attempt++) {
+  for (let attempt = 0; attempt < 10; attempt++) {
     let grid: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
     let availableRows: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
     let availableColumns: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
