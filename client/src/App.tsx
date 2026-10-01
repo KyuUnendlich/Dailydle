@@ -125,15 +125,23 @@ function App() {
             {activeGame === 2 && (
               <div className="queens-grid">
                 {[...Array(8)].map((_, row) =>
-                  [...Array(8)].map((_, col) => (
-                    <div
-                      className="queens-cell"
-                      key={`${row}-${col}`}
-                      onClick={() => handleCellClick(row, col)}
-                    >
-                      {getQueensCell(queensGame.puzzle, row, col) === 1 ? "Q" : ""}
-                    </div>
-                  ))
+                  [...Array(8)].map((_, col) => {
+                    const regionId = getQueensCell(queensGame.solution, row, col);
+                    const isMarked = getQueensCell(queensGame.puzzle, row, col) === 1;
+                    return (
+                      <div
+                        className={`queens-cell region-${regionId}${
+                          selectedCell?.row === row && selectedCell?.col === col
+                            ? " selected"
+                            : ""
+                        }`}
+                        key={`${row}-${col}`}
+                        onClick={() => handleCellClick(row, col)}
+                      >
+                        {isMarked ? "Q" : ""}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             )}

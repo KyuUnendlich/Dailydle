@@ -101,12 +101,34 @@
   cursor: pointer;
 }
 
-.queens-cell:hover {
-  background: lightblue;
+.queens-cell.region-0 { background: #ffb3b3; }
+.queens-cell.region-1 { background: #ffd1a3; }
+.queens-cell.region-2 { background: #fff3a3; }
+.queens-cell.region-3 { background: #b3f0b3; }
+.queens-cell.region-4 { background: #b3e5ff; }
+.queens-cell.region-5 { background: #93b8ff; }
+.queens-cell.region-6 { background: #d9b3ff; }
+.queens-cell.region-7 { background: #ffb3e6; }
+
+.queens-cell.region-0:hover,
+.queens-cell.region-1:hover,
+.queens-cell.region-2:hover,
+.queens-cell.region-3:hover,
+.queens-cell.region-4:hover,
+.queens-cell.region-5:hover,
+.queens-cell.region-6:hover,
+.queens-cell.region-7:hover {
+  filter: brightness(0.92);
 }
 
-.queens-cell.selected {
-  background: lightblue;
+.queens-cell.region-0.selected,
+.queens-cell.region-1.selected,
+.queens-cell.region-2.selected,
+.queens-cell.region-3.selected,
+.queens-cell.region-4.selected,
+.queens-cell.region-5.selected,
+.queens-cell.region-6.selected,
+.queens-cell.region-7.selected {
   box-shadow: inset 0 0 0 3px #667eea;
 }
 

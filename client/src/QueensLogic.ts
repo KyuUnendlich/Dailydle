@@ -3,16 +3,11 @@ const rng = seedrandom('mySeed');
 const seedRngUsed: boolean = false;
 
 export type Grid = (number | null)[][];
+type Coord = readonly [x: number, y: number];
 export interface QueensGame {
   puzzle: Grid;
   solution: Grid;
 }
-
-//export function generatePuzzle(): QueensGame {
- // const puzzle: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
-  //const solution: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
-  //turn { puzzle, solution };
-//}
 
 export function generatePuzzle(): QueensGame {
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -20,12 +15,17 @@ export function generatePuzzle(): QueensGame {
     let availableRows: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
     let availableColumns: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 
-    fillQueens(grid, availableRows, availableColumns, 0);
+    let positionsByColor: Coord[][] = Array.from(
+      { length: 8 },
+      () => []
+    );
+
+    fillQueens(grid, availableRows, availableColumns, 0, positionsByColor);
 
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
     if (filledCellCount >= 8) {
-      fillFirstNeighbor(grid);
+      fillFirstNeighbor(grid, positionsByColor);
 
 
 
@@ -42,11 +42,12 @@ export function generatePuzzle(): QueensGame {
   return { puzzle: empty, solution: structuredClone(empty) };
 }
 
-function fillFirstNeighbor(grid: Grid): void {
+function fillFirstNeighbor(grid: Grid, positionsByColor: Coord[][]): void {
+  let dupeGrid = structuredClone(grid);
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
-      if (grid[col][row] !== null){
-        let colorID = grid[col][row];
+      if (dupeGrid[col][row] !== null){
+        let colorID = dupeGrid[col][row];
         let unfilled = true;
         while (unfilled){
           let rng1 = getRandomInt(0,3);
@@ -54,24 +55,28 @@ function fillFirstNeighbor(grid: Grid): void {
             case 0:
               if (col !== 0){
                 grid[col-1][row] = colorID;
+                positionsByColor[colorID!].push([col-1,row]);
                 unfilled = false;
               }
               break;
             case 1:
               if (col !== 7){
                 grid[col+1][row] = colorID;
+                positionsByColor[colorID!].push([col+1,row]);
                 unfilled = false;
               }
               break;
             case 2:
               if (row !== 0){
                 grid[col][row-1] = colorID;
+                positionsByColor[colorID!].push([col,row-1]);
                 unfilled = false;
               }
               break;
             case 3:
               if (row !== 7){
                 grid[col][row+1] = colorID;
+                positionsByColor[colorID!].push([col,row+1]);
                 unfilled = false;
               }
               break;
@@ -83,7 +88,7 @@ function fillFirstNeighbor(grid: Grid): void {
   }
 }
 
-function fillQueens(grid: Grid, availableRows: number[], availableColumns: number[], colorID: number): void {
+function fillQueens(grid: Grid, availableRows: number[], availableColumns: number[], colorID: number, positionsByColor: Coord[][]): void {
   let attemptsCount = 0;
   let foundSolution = false;
 
@@ -91,22 +96,22 @@ function fillQueens(grid: Grid, availableRows: number[], availableColumns: numbe
   while(attemptsCount < 5 && foundSolution === false){
     attemptsCount++;
 
-    let rngX = availableColumns[getRandomInt(0, availableColumns.length - 1)];
-    let rngY = availableRows[getRandomInt(0, availableRows.length - 1)];
-    let newAvailableColumns = availableColumns.filter(n => n !== rngX);
-    let newAvailableRows = availableRows.filter(n => n !== rngY);
+    let rngC = availableColumns[getRandomInt(0, availableColumns.length - 1)];
+    let rngR = availableRows[getRandomInt(0, availableRows.length - 1)];
+    let newAvailableColumns = availableColumns.filter(n => n !== rngC);
+    let newAvailableRows = availableRows.filter(n => n !== rngR);
 
     console.log(`--- Color ${colorID} - Attempt ${attemptsCount} ---`);
   
     //check corner validity
-    for (let intX = -1; intX < 2; intX = intX +2) {
-      for (let intY = -1; intY < 2; intY = intY +2) {
-        let newX = rngX + intX;
-        let newY = rngY + intY;
+    for (let intC = -1; intC < 2; intC = intC +2) {
+      for (let intR = -1; intR < 2; intR = intR +2) {
+        let newC = rngC + intC;
+        let newR = rngR + intR;
 
-        if (newX >= 0 && newY >= 0 && newX < 8 && newY < 8){
-          if (grid[newX][newY] !== null){
-            console.log(`❌ Rejected: corner at x=${newX}, y=${newY} is occupied by:`, grid[newX][newY]);
+        if (newC >= 0 && newR >= 0 && newC < 8 && newR < 8){
+          if (grid[newC][newR] !== null){
+            console.log(`❌ Rejected: corner at x=${newC}, y=${newR} is occupied by:`, grid[newC][newR]);
             continue outer; // exits both loops
           }
         }
@@ -114,10 +119,11 @@ function fillQueens(grid: Grid, availableRows: number[], availableColumns: numbe
     }
     foundSolution = true;
     attemptsCount = 10;
-    grid[rngX][rngY] = colorID;
-    console.log(`✅ Valid solution found at x=${rngX}, y=${rngY}`);
+    grid[rngC][rngR] = colorID;
+    positionsByColor[colorID!].push([rngC,rngR]);
+    console.log(`✅ Valid solution found at x=${rngC}, y=${rngR}`);
     if (colorID < 7) {
-      fillQueens(grid, newAvailableRows, newAvailableColumns, colorID + 1);
+      fillQueens(grid, newAvailableRows, newAvailableColumns, colorID + 1, positionsByColor);
       return;
     }
   }
