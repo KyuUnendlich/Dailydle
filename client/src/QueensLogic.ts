@@ -3,11 +3,15 @@ const rng = seedrandom('mySeed');
 const seedRngUsed: boolean = false;
 
 export type Grid = (number | null)[][];
-type Coord = readonly [x: number, y: number];
 export interface QueensGame {
   puzzle: Grid;
   solution: Grid;
 }
+type Coord = readonly [x: number, y: number];
+type WeightedItem<T> = {
+  value: T;
+  weight: number;
+};
 
 export function generatePuzzle(): QueensGame {
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -25,11 +29,13 @@ export function generatePuzzle(): QueensGame {
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
     if (filledCellCount >= 8) {
+      const solution = structuredClone(grid);
+
       fillFirstNeighbor(grid, positionsByColor);
 
+      calculateColorChances();
+      fillRest(grid, positionsByColor);
 
-
-      const solution = structuredClone(grid);
       const puzzle: Grid = grid.map(row =>
         row.map(cell => (cell === null ? null : 1))
       );
@@ -40,6 +46,36 @@ export function generatePuzzle(): QueensGame {
 
   const empty: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
   return { puzzle: empty, solution: structuredClone(empty) };
+}
+
+function fillRest(grid: Grid, positionsByColor: Coord[][]): void {
+  
+}
+
+function calculateColorChances (): void {
+  let allPossibleColors: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
+  let colorWeights = new Array(8);
+  let remainingPercentage = 1;
+  for (let i = 0; i < 7; i++){
+    let rngColorID = allPossibleColors[getRandomInt(0,allPossibleColors.length - 1)];
+    allPossibleColors = allPossibleColors.filter(n => n !== rngColorID);
+    let rngAmount = getRandomInt(5,22/remainingPercentage*1.2); // later colors have higher max chance
+
+    rngAmount = rngAmount * remainingPercentage;
+    rngAmount = Math.round(rngAmount);
+    
+    if (remainingPercentage * 100 - rngAmount < 0){
+      rngAmount = remainingPercentage;
+      remainingPercentage = 0;
+    }
+
+    colorWeights[i] = { value: rngColorID, weight: rngAmount };
+    console.log(`--- Color ${rngColorID} - Weight ${rngAmount} - Remaining ${remainingPercentage}`);
+    remainingPercentage -= rngAmount / 100;
+    remainingPercentage = Math.round(remainingPercentage * 100) / 100;
+  }
+  colorWeights[7] = { value: allPossibleColors[0], weight: remainingPercentage * 100 };
+  console.log(`--- Color ${allPossibleColors[0]} - Weight ${remainingPercentage * 100} ---`);
 }
 
 function fillFirstNeighbor(grid: Grid, positionsByColor: Coord[][]): void {
@@ -137,7 +173,28 @@ function fillQueens(grid: Grid, availableRows: number[], availableColumns: numbe
 
 
 
+function pickWeighted<T>(items: WeightedItem<T>[]): T {
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
 
+  if (totalWeight <= 0) {
+    throw new Error("Total weight must be greater than 0");
+  }
+
+  const roll = Math.random() * totalWeight;
+
+  let currentWeight = 0;
+
+  for (const item of items) {
+    currentWeight += item.weight;
+
+    if (roll < currentWeight) {
+      return item.value;
+    }
+  }
+
+  // Fallback for floating-point edge cases
+  return items[items.length - 1].value;
+}
 
 function getRandomInt(min: number, max: number): number {
     min = Math.ceil(min);
