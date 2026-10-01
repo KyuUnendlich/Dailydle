@@ -110,6 +110,8 @@
 .queens-cell.region-6 { background: #d9b3ff; }
 .queens-cell.region-7 { background: #ffb3e6; }
 
+.queens-cell .mark-x { color: #d32f2f; }
+
 .queens-cell.region-0:hover,
 .queens-cell.region-1:hover,
 .queens-cell.region-2:hover,

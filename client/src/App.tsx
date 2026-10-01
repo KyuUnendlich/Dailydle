@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import "./App.css";
 import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
 import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell, setCell as setQueensCell } from "./QueensLogic";
@@ -35,7 +35,7 @@ function App() {
   });
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
 
-  const handleCellClick = (row: number, col: number) => {
+  const handleCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
     if (activeGame === 2) {
       setQueensGame((prev) => ({
@@ -44,10 +44,19 @@ function App() {
           prev.puzzle,
           row,
           col,
-          prev.puzzle[row][col] === null ? 1 : null
+          prev.puzzle[row][col] === mark ? null : mark
         ),
       }));
     }
+  };
+
+  const handleCellContextMenu = (
+    row: number,
+    col: number,
+    event: MouseEvent
+  ) => {
+    event.preventDefault();
+    handleCellClick(row, col, -1);
   };
 
   const handleNumberClick = (num: number) => {
@@ -111,7 +120,7 @@ function App() {
                                 : ""
                             }`}
                             key={cellIndex}
-                            onClick={() => handleCellClick(row, col)}
+                            onClick={() => handleCellClick(row, col, 0)}
                           >
                             {getCell(game.puzzle, row, col) ?? ""}
                           </div>
@@ -127,7 +136,7 @@ function App() {
                 {[...Array(8)].map((_, row) =>
                   [...Array(8)].map((_, col) => {
                     const regionId = getQueensCell(queensGame.solution, row, col);
-                    const isMarked = getQueensCell(queensGame.puzzle, row, col) === 1;
+                    const mark = getQueensCell(queensGame.puzzle, row, col);
                     return (
                       <div
                         className={`queens-cell region-${regionId}${
@@ -136,9 +145,16 @@ function App() {
                             : ""
                         }`}
                         key={`${row}-${col}`}
-                        onClick={() => handleCellClick(row, col)}
+                        onClick={() => handleCellClick(row, col, 1)}
+                        onContextMenu={(event) =>
+                          handleCellContextMenu(row, col, event)
+                        }
                       >
-                        {isMarked ? "Q" : ""}
+                        {mark === 1 ? (
+                          <span className="mark-q">Q</span>
+                        ) : mark === -1 ? (
+                          <span className="mark-x">X</span>
+                        ) : null}
                       </div>
                     );
                   })

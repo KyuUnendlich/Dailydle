@@ -14,6 +14,17 @@ type WeightedItem<T> = {
   weight: number;
 };
 
+let colors = [
+  { value: 0,    weight: 30 }, // 30%
+  { value: 1,   weight: 20 }, // 20%
+  { value: 2,  weight: 15 }, // 15%
+  { value: 3, weight: 10 }, // 10%
+  { value: 4, weight: 8 },  // 8%
+  { value: 5, weight: 7 },  // 7%
+  { value: 6,   weight: 5 },  // 5%
+  { value: 7,  weight: 5 },  // 5%
+]
+
 export function generatePuzzle(): QueensGame {
   for (let attempt = 0; attempt < 10; attempt++) {
     let grid: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
@@ -34,12 +45,10 @@ export function generatePuzzle(): QueensGame {
       fillFirstNeighbor(grid, positionsByColor);
 
       let colorWeight = calculateColorChances();
-      fillRest(grid, positionsByColor, colorWeight);
+      fillRest(grid, positionsByColor, colors);
 
       const solution = structuredClone(grid);
-      const puzzle: Grid = grid.map(row =>
-        row.map(cell => (cell === null ? null : 1))
-      );
+      const puzzle: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
 
       return { puzzle, solution };
     }
