@@ -8,6 +8,7 @@ export interface QueensGame {
   solution: Grid;
 }
 type Coord = readonly [x: number, y: number];
+type ColorWeight = { value: number; weight: number };
 type WeightedItem<T> = {
   value: T;
   weight: number;
@@ -29,13 +30,13 @@ export function generatePuzzle(): QueensGame {
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
     if (filledCellCount >= 8) {
-      const solution = structuredClone(grid);
 
       fillFirstNeighbor(grid, positionsByColor);
 
-      calculateColorChances();
-      fillRest(grid, positionsByColor);
+      let colorWeight = calculateColorChances();
+      fillRest(grid, positionsByColor, colorWeight);
 
+      const solution = structuredClone(grid);
       const puzzle: Grid = grid.map(row =>
         row.map(cell => (cell === null ? null : 1))
       );
@@ -48,14 +49,68 @@ export function generatePuzzle(): QueensGame {
   return { puzzle: empty, solution: structuredClone(empty) };
 }
 
-function fillRest(grid: Grid, positionsByColor: Coord[][]): void {
-  
+function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWeight[]): void {
+  for (let i = 0; i < 1000; i++){
+    const pickedColor = pickWeighted(colorWeight);
+    console.log(`--- Color ${pickedColor}`);
+    const coords = positionsByColor[pickedColor];
+
+    let rngAmount = getRandomInt(0,coords.length-1)
+    let col = coords[rngAmount][0]
+    let row = coords[rngAmount][1]
+
+    let count = 0;
+    let unfilled = true;
+    while (unfilled && count < 5){
+      let rng1 = getRandomInt(0,3);
+      count++;
+      switch (rng1) {
+        case 0:
+          if (col !== 0){
+            if (grid[col-1][row] === null){
+              grid[col-1][row] = pickedColor;
+              positionsByColor[pickedColor!].push([col-1,row]);
+              unfilled = false;
+            }
+          }
+          break;
+        case 1:
+          if (col !== 7){
+            if (grid[col+1][row] === null){
+              grid[col+1][row] = pickedColor;
+              positionsByColor[pickedColor!].push([col+1,row]);
+              unfilled = false;
+            }
+          }
+          break;
+        case 2:
+          if (row !== 0){
+            if (grid[col][row-1] === null){
+              grid[col][row-1] = pickedColor;
+              positionsByColor[pickedColor!].push([col,row-1]);
+              unfilled = false;
+            }
+          }
+          break;
+        case 3:
+          if (row !== 7){
+            if (grid[col][row+1] === null){
+              grid[col][row+1] = pickedColor;
+              positionsByColor[pickedColor!].push([col,row+1]);
+              unfilled = false;
+            }
+          }
+        break;
+      }
+    }
+  }
 }
 
-function calculateColorChances (): void {
+function calculateColorChances (): ColorWeight[] {
   let allPossibleColors: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
   let colorWeights = new Array(8);
   let remainingPercentage = 1;
+  
   for (let i = 0; i < 7; i++){
     let rngColorID = allPossibleColors[getRandomInt(0,allPossibleColors.length - 1)];
     allPossibleColors = allPossibleColors.filter(n => n !== rngColorID);
@@ -76,6 +131,8 @@ function calculateColorChances (): void {
   }
   colorWeights[7] = { value: allPossibleColors[0], weight: remainingPercentage * 100 };
   console.log(`--- Color ${allPossibleColors[0]} - Weight ${remainingPercentage * 100} ---`);
+
+  return colorWeights;
 }
 
 function fillFirstNeighbor(grid: Grid, positionsByColor: Coord[][]): void {
