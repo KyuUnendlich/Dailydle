@@ -25,6 +25,10 @@ export function generatePuzzle(): QueensGame {
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
     if (filledCellCount >= 8) {
+      fillFirstNeighbor(grid);
+
+
+
       const solution = structuredClone(grid);
       const puzzle: Grid = grid.map(row =>
         row.map(cell => (cell === null ? null : 1))
@@ -36,6 +40,47 @@ export function generatePuzzle(): QueensGame {
 
   const empty: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
   return { puzzle: empty, solution: structuredClone(empty) };
+}
+
+function fillFirstNeighbor(grid: Grid): void {
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      if (grid[col][row] !== null){
+        let colorID = grid[col][row];
+        let unfilled = true;
+        while (unfilled){
+          let rng1 = getRandomInt(0,3);
+          switch (rng1) {
+            case 0:
+              if (col !== 0){
+                grid[col-1][row] = colorID;
+                unfilled = false;
+              }
+              break;
+            case 1:
+              if (col !== 7){
+                grid[col+1][row] = colorID;
+                unfilled = false;
+              }
+              break;
+            case 2:
+              if (row !== 0){
+                grid[col][row-1] = colorID;
+                unfilled = false;
+              }
+              break;
+            case 3:
+              if (row !== 7){
+                grid[col][row+1] = colorID;
+                unfilled = false;
+              }
+              break;
+          }
+        }
+
+      }
+    }
+  }
 }
 
 function fillQueens(grid: Grid, availableRows: number[], availableColumns: number[], colorID: number): void {
