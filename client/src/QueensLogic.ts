@@ -77,42 +77,55 @@ function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWei
         case 0:
           if (col !== 0){
             if (grid[col-1][row] === null){
-              grid[col-1][row] = pickedColor;
-              positionsByColor[pickedColor!].push([col-1,row]);
-              unfilled = false;
+              if (checkNoOtherSolutionExists(grid, [col-1, row])) {
+                grid[col-1][row] = pickedColor;
+                positionsByColor[pickedColor!].push([col-1,row]);
+                unfilled = false;
+              }
             }
           }
           break;
         case 1:
           if (col !== 7){
             if (grid[col+1][row] === null){
-              grid[col+1][row] = pickedColor;
-              positionsByColor[pickedColor!].push([col+1,row]);
-              unfilled = false;
+              if (checkNoOtherSolutionExists(grid, [col+1, row])) {
+                grid[col+1][row] = pickedColor;
+                positionsByColor[pickedColor!].push([col+1,row]);
+                unfilled = false;
+              }
             }
           }
           break;
         case 2:
           if (row !== 0){
             if (grid[col][row-1] === null){
-              grid[col][row-1] = pickedColor;
-              positionsByColor[pickedColor!].push([col,row-1]);
-              unfilled = false;
+              if (checkNoOtherSolutionExists(grid, [col, row-1])) {
+                grid[col][row-1] = pickedColor;
+                positionsByColor[pickedColor!].push([col,row-1]);
+                unfilled = false;
+              }
             }
           }
           break;
         case 3:
           if (row !== 7){
             if (grid[col][row+1] === null){
-              grid[col][row+1] = pickedColor;
-              positionsByColor[pickedColor!].push([col,row+1]);
-              unfilled = false;
+              if (checkNoOtherSolutionExists(grid, [col, row+1])) {
+                grid[col][row+1] = pickedColor;
+                positionsByColor[pickedColor!].push([col,row+1]);
+                unfilled = false;
+              }
             }
           }
         break;
       }
     }
   }
+}
+
+function checkNoOtherSolutionExists (grid: Grid, coord: Coord): Boolean {
+
+  return true;
 }
 
 function calculateColorChances (): ColorWeight[] {
