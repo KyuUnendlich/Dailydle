@@ -15,14 +15,14 @@ type WeightedItem<T> = {
 };
 
 let colors = [
-  { value: 0,    weight: 30 }, // 30%
-  { value: 1,   weight: 20 }, // 20%
+  { value: 0,    weight: 35 }, // 35%
+  { value: 1,   weight: 25 }, // 25%
   { value: 2,  weight: 15 }, // 15%
-  { value: 3, weight: 10 }, // 10%
-  { value: 4, weight: 8 },  // 8%
-  { value: 5, weight: 7 },  // 7%
-  { value: 6,   weight: 5 },  // 5%
-  { value: 7,  weight: 5 },  // 5%
+  { value: 3, weight: 8 }, // 10%
+  { value: 4, weight: 5 },  // 8%
+  { value: 5, weight: 10 },  // 7%
+  { value: 6,   weight: 0 },  // 5%
+  { value: 7,  weight: 2 },  // 5%
 ]
 
 export function generatePuzzle(): QueensGame {
@@ -36,7 +36,7 @@ export function generatePuzzle(): QueensGame {
       () => []
     );
 
-    fillQueens(grid, availableRows, availableColumns, 0, positionsByColor);
+    fillQueens(grid, availableColumns, availableRows, 0, positionsByColor);
 
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
@@ -44,7 +44,7 @@ export function generatePuzzle(): QueensGame {
 
       fillFirstNeighbor(grid, positionsByColor);
 
-      let colorWeight = calculateColorChances();
+      //let colorWeight = calculateColorChances();
       fillRest(grid, positionsByColor, colors);
 
       const solution = structuredClone(grid);
@@ -61,7 +61,7 @@ export function generatePuzzle(): QueensGame {
 function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWeight[]): void {
   for (let i = 0; i < 1000; i++){
     const pickedColor = pickWeighted(colorWeight);
-    console.log(`--- Color ${pickedColor}`);
+    //console.log(`--- Color ${pickedColor}`);
     const coords = positionsByColor[pickedColor];
 
     let rngAmount = getRandomInt(0,coords.length-1)
@@ -203,7 +203,7 @@ function fillFirstNeighbor(grid: Grid, positionsByColor: Coord[][]): void {
   }
 }
 
-function fillQueens(grid: Grid, availableRows: number[], availableColumns: number[], colorID: number, positionsByColor: Coord[][]): void {
+function fillQueens(grid: Grid, availableColumns: number[], availableRows: number[], colorID: number, positionsByColor: Coord[][]): void {
   let attemptsCount = 0;
   let foundSolution = false;
 
@@ -259,7 +259,7 @@ function pickWeighted<T>(items: WeightedItem<T>[]): T {
     throw new Error("Total weight must be greater than 0");
   }
 
-  const roll = Math.random() * totalWeight;
+  const roll = getRandomInt(0, 1) * totalWeight;
 
   let currentWeight = 0;
 
@@ -286,11 +286,11 @@ function getRandomInt(min: number, max: number): number {
 }
 
 export const getCell = (grid: Grid, row: number, col: number): number | null => {
-  return grid[row][col];
+  return grid[col][row];
 };
 
 export const setCell = (grid: Grid, row: number, col: number, value: number | null): Grid => {
   const next = grid.map((r) => [...r]);
-  next[row][col] = value;
+  next[col][row] = value;
   return next;
 };
