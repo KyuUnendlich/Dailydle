@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import "./App.css";
 import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
-import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell, setCell as setQueensCell } from "./QueensLogic";
+import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell } from "./QueensLogic";
 
 type Coordinate = { row: number; col: number };
 
@@ -17,6 +17,43 @@ const emptyQueens = (): QueensGame => ({
   puzzle: emptyGrid(8),
   solution: emptyGrid(8),
 });
+
+const isAutoX = (grid: (number | null)[][], row: number, col: number): boolean => {
+  for (let otherCol = 0; otherCol < 8; otherCol++) {
+    if (otherCol !== col && getQueensCell(grid, row, otherCol) === 1) return true;
+  }
+  for (let otherRow = 0; otherRow < 8; otherRow++) {
+    if (otherRow !== row && getQueensCell(grid, otherRow, col) === 1) return true;
+  }
+  for (const rowOffset of [-1, 1]) {
+    for (const colOffset of [-1, 1]) {
+      const otherRow = row + rowOffset;
+      const otherCol = col + colOffset;
+      if (
+        otherRow >= 0 &&
+        otherRow < 8 &&
+        otherCol >= 0 &&
+        otherCol < 8 &&
+        getQueensCell(grid, otherRow, otherCol) === 1
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+const getDisplayMark = (
+  grid: (number | null)[][],
+  row: number,
+  col: number
+): number | null => {
+  const manual = getQueensCell(grid, row, col);
+  if (manual === 1) return 1;
+  if (manual === 0) return null;
+  if (manual === -1) return -1;
+  return isAutoX(grid, row, col) ? -1 : null;
+};
 
 function App() {
   const sudokuGenerated = useRef(false);
@@ -64,17 +101,50 @@ function App() {
 
   const handleCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
-    if (activeGame === 2) {
-      setQueensGame((prev) => ({
-        ...prev,
-        puzzle: setQueensCell(
-          prev.puzzle,
-          row,
-          col,
-          getQueensCell(prev.puzzle, row, col) === mark ? null : mark
-        ),
-      }));
-    }
+    if (activeGame !== 2) return;
+
+    setQueensGame((prev) => {
+      const next = prev.puzzle.map((column) => [...column]);
+      const displayMark = getDisplayMark(prev.puzzle, row, col);
+      const autoMarked = isAutoX(prev.puzzle, row, col);
+
+      if (mark === 1) {
+        if (displayMark === 1) {
+          next[col][row] = null;
+        } else {
+          for (let otherCol = 0; otherCol < 8; otherCol++) {
+            if (next[otherCol][row] === 1) next[otherCol][row] = null;
+          }
+          for (let otherRow = 0; otherRow < 8; otherRow++) {
+            if (next[col][otherRow] === 1) next[col][otherRow] = null;
+          }
+          for (const rowOffset of [-1, 1]) {
+            for (const colOffset of [-1, 1]) {
+              const otherRow = row + rowOffset;
+              const otherCol = col + colOffset;
+              if (
+                otherRow >= 0 &&
+                otherRow < 8 &&
+                otherCol >= 0 &&
+                otherCol < 8 &&
+                next[otherCol][otherRow] === 1
+              ) {
+                next[otherCol][otherRow] = null;
+              }
+            }
+          }
+          next[col][row] = 1;
+        }
+      } else if (mark === -1) {
+        if (displayMark === -1) {
+          next[col][row] = autoMarked ? 0 : null;
+        } else {
+          next[col][row] = -1;
+        }
+      }
+
+      return { ...prev, puzzle: next };
+    });
   };
 
   const handleCellContextMenu = (event: MouseEvent) => {
@@ -173,7 +243,7 @@ function App() {
                 {[...Array(8)].map((_, row) =>
                   [...Array(8)].map((_, col) => {
                     const regionId = getQueensCell(queensGame.solution, row, col);
-                    const mark = getQueensCell(queensGame.puzzle, row, col);
+                    const mark = getDisplayMark(queensGame.puzzle, row, col);
                     return (
                       <div
                         className={`queens-cell region-${regionId}${
