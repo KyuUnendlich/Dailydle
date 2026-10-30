@@ -42,7 +42,7 @@ export function generatePuzzle(): QueensGame {
 
     if (filledCellCount >= 8) {
 
-      fillFirstNeighbor(grid, positionsByColor);
+      //fillFirstNeighbor(grid, positionsByColor); //dont use anymore
 
       //let colorWeight = calculateColorChances();
       fillRest(grid, positionsByColor, colors);
