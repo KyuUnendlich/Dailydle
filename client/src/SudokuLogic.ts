@@ -329,6 +329,16 @@ function getRandomInt(min: number, max: number): number {
 }
 
 
+export const isSolved = (game: SudokuGame): boolean => {
+  if (game.solution[0][0] === null) return false;
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < 6; col++) {
+      if (game.puzzle[row][col] !== game.solution[row][col]) return false;
+    }
+  }
+  return true;
+};
+
 export const getCell = (grid: Grid, row: number, col: number): number | null => {
   return grid[row][col];
 };

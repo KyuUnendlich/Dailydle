@@ -349,6 +349,44 @@ function getRandomInt(min: number, max: number): number {
 	}
 }
 
+export const isSolved = (game: QueensGame): boolean => {
+  if (game.solution[0][0] === null) return false;
+
+  const usedRows = new Set<number>();
+  const usedColumns = new Set<number>();
+  const usedRegions = new Set<number>();
+  const queenColumnsByRow: number[] = [];
+  let count = 0;
+
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      if (game.puzzle[col][row] !== 1) continue;
+
+      const region = game.solution[col][row];
+      if (region === null) return false;
+      if (usedRows.has(row) || usedColumns.has(col) || usedRegions.has(region)) {
+        return false;
+      }
+
+      usedRows.add(row);
+      usedColumns.add(col);
+      usedRegions.add(region);
+      queenColumnsByRow[row] = col;
+      count++;
+    }
+  }
+
+  if (count !== 8) return false;
+
+  for (let row = 1; row < 8; row++) {
+    if (Math.abs(queenColumnsByRow[row] - queenColumnsByRow[row - 1]) === 1) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const getCell = (grid: Grid, row: number, col: number): number | null => {
   return grid[col][row];
 };

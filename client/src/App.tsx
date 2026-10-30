@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import "./App.css";
-import { SudokuGame, generatePuzzle, getCell, setCell } from "./SudokuLogic";
-import { QueensGame, generatePuzzle as generateQueens, getCell as getQueensCell } from "./QueensLogic";
+import { SudokuGame, generatePuzzle, getCell, setCell, isSolved as isSudokuSolved } from "./SudokuLogic";
+import {
+  QueensGame,
+  generatePuzzle as generateQueens,
+  getCell as getQueensCell,
+  isSolved as isQueensSolved,
+} from "./QueensLogic";
 
 type Coordinate = { row: number; col: number };
 
@@ -73,6 +78,8 @@ function App() {
     return generateQueens();
   });
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
+
+  const puzzleSolved = activeGame === 1 ? isSudokuSolved(game) : isQueensSolved(queensGame);
 
   useEffect(() => {
     const releaseMouse = () => {
@@ -207,6 +214,7 @@ function App() {
       </header>
       <main className="outsidemain">
         <main className="main">
+          {puzzleSolved && <div className="win-popup">Puzzle Solved</div>}
           <p className="game-title">{activeGame === 1 ? "Sudoku" : "Queens"}</p>
           <div className="gamebox">
             {activeGame === 1 && (

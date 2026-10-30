@@ -26,6 +26,34 @@
   max-width: 960px;
   width: 100%;
   margin: 0 auto;
+  position: relative;
+}
+
+.win-popup {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  font-size: 25px;
+  font-weight: bold;
+  line-height: 1.2;
+  padding: 0 0.75rem;
+  color: #667eea;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: win-popup-in 0.2s ease-out;
+}
+
+@keyframes win-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .game-title {
