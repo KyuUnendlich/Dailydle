@@ -21,6 +21,7 @@ const emptyQueens = (): QueensGame => ({
 function App() {
   const sudokuGenerated = useRef(false);
   const queensGenerated = useRef(false);
+  const activeMouseButton = useRef<number | null>(null);
 
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
   const [game, setGame] = useState<SudokuGame>(() => {
@@ -34,6 +35,18 @@ function App() {
     return generateQueens();
   });
   const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
+
+  useEffect(() => {
+    const releaseMouse = () => {
+      activeMouseButton.current = null;
+    };
+    window.addEventListener("mouseup", releaseMouse);
+    window.addEventListener("blur", releaseMouse);
+    return () => {
+      window.removeEventListener("mouseup", releaseMouse);
+      window.removeEventListener("blur", releaseMouse);
+    };
+  }, []);
 
   const handleCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
@@ -152,10 +165,11 @@ function App() {
                             : ""
                         }`}
                         key={`${row}-${col}`}
-                        onClick={() => handleCellClick(row, col, 1)}
-                        onContextMenu={(event) =>
-                          handleCellContextMenu(row, col, event)
+                        onMouseDown={(event) =>
+                          handleQueensMouseDown(row, col, event)
                         }
+                        onMouseEnter={() => handleQueensMouseEnter(row, col)}
+                        onContextMenu={handleCellContextMenu}
                       >
                         {mark === 1 ? (
                           <span className="mark-q">Q</span>
