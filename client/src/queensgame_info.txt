@@ -1,0 +1,15 @@
+Queens is a logic puzzle, not a chess game. On an 8×8 grid, your goal is to place 8 queens so that none of them conflicts with another. The classic version requires no two queens to share a row, column, or diagonal; the popular app-style version also adds colored regions.
+
+Modern Queens Game
+
+The modern version divides the 8×8 board into 8 colored regions. You must place:
+
+    One queen in every row.
+
+    One queen in every column.
+
+    One queen in every colored region.
+
+    No two queens diagonally adjacent to each other.
+
+So a queen blocks its whole row and column, but only the four immediately touching diagonal squares—not the entire diagonal line.

@@ -38,6 +38,8 @@ export function generatePuzzle(): QueensGame {
 
     fillQueens(grid, availableColumns, availableRows, 0, positionsByColor);
 
+    const solution = structuredClone(grid);
+
     const filledCellCount = grid.flat().filter(cell => cell !== null).length;
 
     if (filledCellCount >= 8) {
@@ -47,7 +49,7 @@ export function generatePuzzle(): QueensGame {
       //let colorWeight = calculateColorChances();
       fillRest(grid, positionsByColor, colors);
 
-      const solution = structuredClone(grid);
+      //const solution = structuredClone(grid);
       const puzzle: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
 
       return { puzzle, solution };
@@ -59,68 +61,7 @@ export function generatePuzzle(): QueensGame {
 }
 
 function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWeight[]): void {
-  for (let i = 0; i < 1000; i++){
-    const pickedColor = pickWeighted(colorWeight);
-    //console.log(`--- Color ${pickedColor}`);
-    const coords = positionsByColor[pickedColor];
-
-    let rngAmount = getRandomInt(0,coords.length-1)
-    let col = coords[rngAmount][0]
-    let row = coords[rngAmount][1]
-
-    let count = 0;
-    let unfilled = true;
-    while (unfilled && count < 5){
-      let rng1 = getRandomInt(0,3);
-      count++;
-      switch (rng1) {
-        case 0:
-          if (col !== 0){
-            if (grid[col-1][row] === null){
-              if (checkNoOtherSolutionExists(grid, [col-1, row])) {
-                grid[col-1][row] = pickedColor;
-                positionsByColor[pickedColor!].push([col-1,row]);
-                unfilled = false;
-              }
-            }
-          }
-          break;
-        case 1:
-          if (col !== 7){
-            if (grid[col+1][row] === null){
-              if (checkNoOtherSolutionExists(grid, [col+1, row])) {
-                grid[col+1][row] = pickedColor;
-                positionsByColor[pickedColor!].push([col+1,row]);
-                unfilled = false;
-              }
-            }
-          }
-          break;
-        case 2:
-          if (row !== 0){
-            if (grid[col][row-1] === null){
-              if (checkNoOtherSolutionExists(grid, [col, row-1])) {
-                grid[col][row-1] = pickedColor;
-                positionsByColor[pickedColor!].push([col,row-1]);
-                unfilled = false;
-              }
-            }
-          }
-          break;
-        case 3:
-          if (row !== 7){
-            if (grid[col][row+1] === null){
-              if (checkNoOtherSolutionExists(grid, [col, row+1])) {
-                grid[col][row+1] = pickedColor;
-                positionsByColor[pickedColor!].push([col,row+1]);
-                unfilled = false;
-              }
-            }
-          }
-        break;
-      }
-    }
-  }
+  
 }
 
 function checkNoOtherSolutionExists (grid: Grid, coord: Coord): Boolean {
