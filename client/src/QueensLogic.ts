@@ -26,7 +26,7 @@ let colors = [
 ]
 
 export function generatePuzzle(): QueensGame {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < 500; attempt++) {
     let grid: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
     let availableRows: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
     let availableColumns: number[] = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -36,37 +36,152 @@ export function generatePuzzle(): QueensGame {
       () => []
     );
 
-    fillQueens(grid, availableColumns, availableRows, 0, positionsByColor);
+    if (!fillQueens(grid, availableColumns, availableRows, 0, positionsByColor)) {
+      continue;
+    }
+
+    if (!fillRest(grid, positionsByColor, colors)) {
+      continue;
+    }
 
     const solution = structuredClone(grid);
+    const puzzle: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
 
-    const filledCellCount = grid.flat().filter(cell => cell !== null).length;
-
-    if (filledCellCount >= 8) {
-
-      //fillFirstNeighbor(grid, positionsByColor); //dont use anymore
-
-      //let colorWeight = calculateColorChances();
-      fillRest(grid, positionsByColor, colors);
-
-      //const solution = structuredClone(grid);
-      const puzzle: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
-
-      return { puzzle, solution };
-    }
+    return { puzzle, solution };
   }
 
   const empty: Grid = Array.from({ length: 8 }, () => Array(8).fill(null));
   return { puzzle: empty, solution: structuredClone(empty) };
 }
 
-function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWeight[]): void {
-  
+const FILL_NODE_BUDGET = 250;
+
+function fillRest(grid: Grid, positionsByColor: Coord[][], colorWeight: ColorWeight[]): boolean {
+  let remaining = 0;
+  for (let col = 0; col < 8; col++) {
+    for (let row = 0; row < 8; row++) {
+      if (grid[col][row] === null) remaining++;
+    }
+  }
+
+  return growRegions(grid, remaining, { nodes: 0 });
 }
 
-function checkNoOtherSolutionExists (grid: Grid, coord: Coord): Boolean {
+function growRegions(
+  grid: Grid,
+  remaining: number,
+  budget: { nodes: number }
+): boolean {
+  if (++budget.nodes > FILL_NODE_BUDGET) {
+    return false;
+  }
 
-  return true;
+  if (remaining === 0) {
+    return !hasMultipleSolutions(grid);
+  }
+
+  const moves = getPossibleMoves(grid);
+  shuffleInPlace(moves);
+
+  for (const [col, row, color] of moves) {
+    grid[col][row] = color;
+
+    if (!hasMultipleSolutions(grid) && growRegions(grid, remaining - 1, budget)) {
+      return true;
+    }
+
+    grid[col][row] = null;
+  }
+
+  return false;
+}
+
+function getPossibleMoves(grid: Grid): [number, number, number][] {
+  const moves: [number, number, number][] = [];
+  const seen = new Set<string>();
+  const directions: Coord[] = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  for (let col = 0; col < 8; col++) {
+    for (let row = 0; row < 8; row++) {
+      if (grid[col][row] !== null) continue;
+
+      for (const [dc, dr] of directions) {
+        const neighborCol = col + dc;
+        const neighborRow = row + dr;
+
+        if (neighborCol < 0 || neighborCol > 7 || neighborRow < 0 || neighborRow > 7) {
+          continue;
+        }
+
+        const color = grid[neighborCol][neighborRow];
+        if (color === null) continue;
+
+        const key = `${col},${row},${color}`;
+        if (seen.has(key)) continue;
+
+        seen.add(key);
+        moves.push([col, row, color]);
+      }
+    }
+  }
+
+  return moves;
+}
+
+function hasMultipleSolutions(grid: Grid): boolean {
+  return countSolutions(grid, 2) > 1;
+}
+
+function countSolutions(grid: Grid, maxSolutions: number): number {
+  const usedColumns: boolean[] = Array(8).fill(false);
+  const usedRegions: boolean[] = Array(8).fill(false);
+  const queenColumnByRow: number[] = Array(8).fill(-1);
+
+  let count = 0;
+
+  const search = (row: number): void => {
+    if (count >= maxSolutions) return;
+
+    if (row === 8) {
+      count++;
+      return;
+    }
+
+    for (let col = 0; col < 8; col++) {
+      if (usedColumns[col]) continue;
+
+      const region = grid[col][row];
+      if (region === null || usedRegions[region]) continue;
+
+      if (row > 0 && Math.abs(col - queenColumnByRow[row - 1]) === 1) continue;
+
+      usedColumns[col] = true;
+      usedRegions[region] = true;
+      queenColumnByRow[row] = col;
+
+      search(row + 1);
+
+      usedColumns[col] = false;
+      usedRegions[region] = false;
+
+      if (count >= maxSolutions) return;
+    }
+  };
+
+  search(0);
+  return count;
+}
+
+function shuffleInPlace<T>(items: T[]): void {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = getRandomInt(0, i);
+    [items[i], items[j]] = [items[j], items[i]];
+  }
 }
 
 function calculateColorChances (): ColorWeight[] {
@@ -144,45 +259,53 @@ function fillFirstNeighbor(grid: Grid, positionsByColor: Coord[][]): void {
   }
 }
 
-function fillQueens(grid: Grid, availableColumns: number[], availableRows: number[], colorID: number, positionsByColor: Coord[][]): void {
-  let attemptsCount = 0;
-  let foundSolution = false;
+function fillQueens(grid: Grid, availableColumns: number[], availableRows: number[], colorID: number, positionsByColor: Coord[][]): boolean {
+  if (colorID >= 8) {
+    return true;
+  }
 
-  outer:
-  while(attemptsCount < 5 && foundSolution === false){
-    attemptsCount++;
+  const rows = [...availableRows];
+  shuffleInPlace(rows);
 
-    let rngC = availableColumns[getRandomInt(0, availableColumns.length - 1)];
-    let rngR = availableRows[getRandomInt(0, availableRows.length - 1)];
-    let newAvailableColumns = availableColumns.filter(n => n !== rngC);
-    let newAvailableRows = availableRows.filter(n => n !== rngR);
+  for (const row of rows) {
+    const columns = [...availableColumns];
+    shuffleInPlace(columns);
 
-    console.log(`--- Color ${colorID} - Attempt ${attemptsCount} ---`);
-  
-    //check corner validity
-    for (let intC = -1; intC < 2; intC = intC +2) {
-      for (let intR = -1; intR < 2; intR = intR +2) {
-        let newC = rngC + intC;
-        let newR = rngR + intR;
+    for (const col of columns) {
+      let valid = true;
 
-        if (newC >= 0 && newR >= 0 && newC < 8 && newR < 8){
-          if (grid[newC][newR] !== null){
-            console.log(`❌ Rejected: corner at x=${newC}, y=${newR} is occupied by:`, grid[newC][newR]);
-            continue outer; // exits both loops
-          }
+      for (let previousColor = 0; previousColor < colorID; previousColor++) {
+        const [previousCol, previousRow] = positionsByColor[previousColor][0];
+
+        if (Math.abs(previousCol - col) === 1 && Math.abs(previousRow - row) === 1) {
+          valid = false;
+          break;
         }
       }
-    }
-    foundSolution = true;
-    attemptsCount = 10;
-    grid[rngC][rngR] = colorID;
-    positionsByColor[colorID!].push([rngC,rngR]);
-    console.log(`✅ Valid solution found at x=${rngC}, y=${rngR}`);
-    if (colorID < 7) {
-      fillQueens(grid, newAvailableRows, newAvailableColumns, colorID + 1, positionsByColor);
-      return;
+
+      if (!valid) continue;
+
+      grid[col][row] = colorID;
+      positionsByColor[colorID].push([col, row]);
+
+      const placedRest = fillQueens(
+        grid,
+        availableColumns.filter((n) => n !== col),
+        availableRows.filter((n) => n !== row),
+        colorID + 1,
+        positionsByColor
+      );
+
+      if (placedRest) {
+        return true;
+      }
+
+      positionsByColor[colorID].pop();
+      grid[col][row] = null;
     }
   }
+
+  return false;
 }
 
 
