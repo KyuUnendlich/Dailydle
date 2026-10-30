@@ -23,7 +23,12 @@ const emptyQueens = (): QueensGame => ({
   solution: emptyGrid(8),
 });
 
-const isAutoX = (grid: (number | null)[][], row: number, col: number): boolean => {
+const isAutoX = (
+  grid: (number | null)[][],
+  solution: (number | null)[][],
+  row: number,
+  col: number
+): boolean => {
   for (let otherCol = 0; otherCol < 8; otherCol++) {
     if (otherCol !== col && getQueensCell(grid, row, otherCol) === 1) return true;
   }
@@ -45,11 +50,28 @@ const isAutoX = (grid: (number | null)[][], row: number, col: number): boolean =
       }
     }
   }
+
+  const region = getQueensCell(solution, row, col);
+  if (region !== null) {
+    for (let otherRow = 0; otherRow < 8; otherRow++) {
+      for (let otherCol = 0; otherCol < 8; otherCol++) {
+        if (
+          (otherRow !== row || otherCol !== col) &&
+          getQueensCell(grid, otherRow, otherCol) === 1 &&
+          getQueensCell(solution, otherRow, otherCol) === region
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
   return false;
 };
 
 const getDisplayMark = (
   grid: (number | null)[][],
+  solution: (number | null)[][],
   row: number,
   col: number
 ): number | null => {
@@ -57,7 +79,7 @@ const getDisplayMark = (
   if (manual === 1) return 1;
   if (manual === 0) return null;
   if (manual === -1) return -1;
-  return isAutoX(grid, row, col) ? -1 : null;
+  return isAutoX(grid, solution, row, col) ? -1 : null;
 };
 
 function App() {
@@ -112,8 +134,8 @@ function App() {
 
     setQueensGame((prev) => {
       const next = prev.puzzle.map((column) => [...column]);
-      const displayMark = getDisplayMark(prev.puzzle, row, col);
-      const autoMarked = isAutoX(prev.puzzle, row, col);
+      const displayMark = getDisplayMark(prev.puzzle, prev.solution, row, col);
+      const autoMarked = isAutoX(prev.puzzle, prev.solution, row, col);
 
       if (mark === 1) {
         if (displayMark === 1) {
@@ -137,6 +159,19 @@ function App() {
                 next[otherCol][otherRow] === 1
               ) {
                 next[otherCol][otherRow] = null;
+              }
+            }
+          }
+          const region = getQueensCell(prev.solution, row, col);
+          if (region !== null) {
+            for (let otherRow = 0; otherRow < 8; otherRow++) {
+              for (let otherCol = 0; otherCol < 8; otherCol++) {
+                if (
+                  next[otherCol][otherRow] === 1 &&
+                  getQueensCell(prev.solution, otherRow, otherCol) === region
+                ) {
+                  next[otherCol][otherRow] = null;
+                }
               }
             }
           }
@@ -251,7 +286,7 @@ function App() {
                 {[...Array(8)].map((_, row) =>
                   [...Array(8)].map((_, col) => {
                     const regionId = getQueensCell(queensGame.solution, row, col);
-                    const mark = getDisplayMark(queensGame.puzzle, row, col);
+                    const mark = getDisplayMark(queensGame.puzzle, queensGame.solution, row, col);
                     return (
                       <div
                         className={`queens-cell region-${regionId}${
