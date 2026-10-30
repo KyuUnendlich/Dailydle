@@ -22,6 +22,7 @@ function App() {
   const sudokuGenerated = useRef(false);
   const queensGenerated = useRef(false);
   const activeMouseButton = useRef<number | null>(null);
+  const suppressContextMenu = useRef(false);
 
   const [activeGame, setActiveGame] = useState<1 | 2>(1);
   const [game, setGame] = useState<SudokuGame>(() => {
@@ -40,11 +41,24 @@ function App() {
     const releaseMouse = () => {
       activeMouseButton.current = null;
     };
+    const clearSuppressedContextMenu = () => {
+      suppressContextMenu.current = false;
+    };
+    const handleContextMenu = (event: globalThis.MouseEvent) => {
+      if (suppressContextMenu.current) {
+        event.preventDefault();
+        suppressContextMenu.current = false;
+      }
+    };
+    window.addEventListener("mousedown", clearSuppressedContextMenu, true);
     window.addEventListener("mouseup", releaseMouse);
     window.addEventListener("blur", releaseMouse);
+    window.addEventListener("contextmenu", handleContextMenu);
     return () => {
+      window.removeEventListener("mousedown", clearSuppressedContextMenu, true);
       window.removeEventListener("mouseup", releaseMouse);
       window.removeEventListener("blur", releaseMouse);
+      window.removeEventListener("contextmenu", handleContextMenu);
     };
   }, []);
 
@@ -70,6 +84,9 @@ function App() {
   const handleQueensMouseDown = (row: number, col: number, event: MouseEvent) => {
     if (event.button !== 0 && event.button !== 2) return;
     activeMouseButton.current = event.button;
+    if (event.button === 2) {
+      suppressContextMenu.current = true;
+    }
     handleCellClick(row, col, event.button === 2 ? -1 : 1);
   };
 
