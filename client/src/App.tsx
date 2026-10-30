@@ -44,19 +44,26 @@ function App() {
           prev.puzzle,
           row,
           col,
-          prev.puzzle[row][col] === mark ? null : mark
+          getQueensCell(prev.puzzle, row, col) === mark ? null : mark
         ),
       }));
     }
   };
 
-  const handleCellContextMenu = (
-    row: number,
-    col: number,
-    event: MouseEvent
-  ) => {
+  const handleCellContextMenu = (event: MouseEvent) => {
     event.preventDefault();
-    handleCellClick(row, col, -1);
+  };
+
+  const handleQueensMouseDown = (row: number, col: number, event: MouseEvent) => {
+    if (event.button !== 0 && event.button !== 2) return;
+    activeMouseButton.current = event.button;
+    handleCellClick(row, col, event.button === 2 ? -1 : 1);
+  };
+
+  const handleQueensMouseEnter = (row: number, col: number) => {
+    const button = activeMouseButton.current;
+    if (button === null) return;
+    handleCellClick(row, col, button === 2 ? -1 : 1);
   };
 
   const handleNumberClick = (num: number) => {
