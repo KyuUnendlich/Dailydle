@@ -1,9 +1,13 @@
 import seedrandom from 'seedrandom';
 const rng = seedrandom('mySeed');
+/** When true, random choices use the seeded RNG for reproducible puzzles. */
 const seedRngUsed: boolean = false;
 
+/** 6x6 sudoku grid stored as grid[row][column]; values are 1-6 or null. */
 export type Grid = (number | null)[][];
+/** Grid coordinate in [row, column] form. */
 type Coordinate = [row: number, column: number];
+/** A 6x6 sudoku puzzle, its solved grid, and which cells were given initially. */
 export interface SudokuGame {
   puzzle: Grid;
   solution: Grid;
@@ -11,6 +15,10 @@ export interface SudokuGame {
 }
 
 
+/**
+ * Generates a 6x6 (2x3 boxes) sudoku puzzle by filling a grid, repairing common
+ * defects, then removing cells while preserving a unique solution.
+ */
 export function generatePuzzle(): SudokuGame {
 	while (true) {
 		let grid: Grid = Array.from({ length: 6 }, () => Array(6).fill(null));
@@ -66,6 +74,7 @@ export function generatePuzzle(): SudokuGame {
 	}
 }
 
+/** Counts solutions via backtracking up to `maxSolutions` for uniqueness checks. */
 function countSolutions(grid: Grid, maxSolutions: number = 2): number {
   	// 1. Find the first empty cell
 	let row = -1, col = -1;
@@ -90,6 +99,7 @@ function countSolutions(grid: Grid, maxSolutions: number = 2): number {
 	return count;
 }
 
+/** Checks whether `num` can be placed at (row, col) under 6x6 row/column/2x3-box rules. */
 function isValid(grid: Grid, row: number, col: number, num: number): boolean {
 	for (let i = 0; i < 6; i++) {
 		if (grid[row][i] === num) return false; // row
@@ -105,6 +115,7 @@ function isValid(grid: Grid, row: number, col: number, num: number): boolean {
 	return true;
 }
 
+/** Verifies the grid is completely filled and each row, column, and 2x3 box contains 1-6 once. */
 function CheckGrid(grid: Grid): boolean {
 	for (let i = 0; i < 6; i++) {
 		const rowSet: Set<number> = new Set();
@@ -139,6 +150,11 @@ function CheckGrid(grid: Grid): boolean {
 
 
 
+/**
+ * Attempts to repair certain partially-invalid filled grids that end up with exactly
+ * two empty cells by swapping two numbers in a related box and refilling the gaps.
+ * Returns false when the grid is not in a supported repair state.
+ */
 function doCorrectionAlgorithm(grid: Grid): boolean {
 	//This is honestly probably less efficient than just creating a new grid and hoping the next one generates correctly (~15% chance)
 	//i like this too much though so ill keep it in, even if it only solves half the failed grids
@@ -232,6 +248,7 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 	return true;
 }
 
+/** Returns all candidate numbers (1-6) that do not violate row, column, or 2x3-box constraints. */
 function getValidNextNumber(grid: Grid, row: number, column: number): number[] {
   const invalidNumbers = new Set<number | null>();
 
@@ -262,6 +279,7 @@ function getValidNextNumber(grid: Grid, row: number, column: number): number[] {
   return [1, 2, 3, 4, 5, 6].filter((num) => !invalidNumbers.has(num));
 }
 
+/** Maps a (row, column) coordinate to its 2x3 box index (0-5, left-to-right, top-to-bottom). */
 function getMyBox(coordinate: Coordinate): number{
 if (coordinate[0] < 2){
 		if (coordinate[1] < 3){
@@ -284,6 +302,7 @@ if (coordinate[0] < 2){
 	}	
 }
 
+/** Returns all cell coordinates belonging to the same 2x3 box as the given coordinate. */
 function getBoxCoordinates(coordinate: Coordinate): Coordinate[]{
 	if (coordinate[0] < 2){
 		if (coordinate[1] < 3){
@@ -306,6 +325,7 @@ function getBoxCoordinates(coordinate: Coordinate): Coordinate[]{
 	}	
 }
 
+/** Returns all cell coordinates for a 2x3 box by its index (0-5). */
 function getBoxCoordinatesById(id: number): Coordinate[]{
 	switch (id) {
 		case 0:
@@ -328,6 +348,7 @@ function getBoxCoordinatesById(id: number): Coordinate[]{
 
 
 
+/** Returns an integer in [min, max] using seeded or Math.random based on configuration. */
 function getRandomInt(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -339,6 +360,7 @@ function getRandomInt(min: number, max: number): number {
 }
 
 
+/** Returns true when every puzzle cell matches the generated solution. */
 export const isSolved = (game: SudokuGame): boolean => {
   if (game.solution[0][0] === null) return false;
   for (let row = 0; row < 6; row++) {
@@ -349,16 +371,19 @@ export const isSolved = (game: SudokuGame): boolean => {
   return true;
 };
 
+/** Reads the value at (row, column) from a 6x6 sudoku grid. */
 export const getCell = (grid: Grid, row: number, col: number): number | null => {
   return grid[row][col];
 };
 
+/** Returns a new grid with the specified (row, column) cell updated immutably. */
 export const setCell = (grid: Grid, row: number, col: number, value: number | null): Grid => {
   const next = grid.map((r) => [...r]);
   next[row][col] = value;
   return next;
 };
 
+/** Indicates whether a cell was not part of the initial puzzle and can be edited by the player. */
 export const isCellEditable = (game: SudokuGame, row: number, col: number): boolean => {
   const cellValue = game.initialState[row][col];
   // Cell is editable if it was originally empty (null in initialState)
