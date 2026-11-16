@@ -29,7 +29,7 @@ const emptyQueens = (): QueensGame => ({
 });
 
 /** Determines whether a queens cell is implicitly blocked by another placed queen. */
-const isAutoX = (
+const isQueensAutoX = (
   grid: (number | null)[][],
   solution: (number | null)[][],
   row: number,
@@ -76,7 +76,7 @@ const isAutoX = (
 };
 
 /** Resolves the visible queens mark, preferring manual marks over inferred auto-X markers. */
-const getDisplayMark = (
+const getQueensDisplayMark = (
   grid: (number | null)[][],
   solution: (number | null)[][],
   row: number,
@@ -86,45 +86,100 @@ const getDisplayMark = (
   if (manual === 1) return 1;
   if (manual === 0) return null;
   if (manual === -1) return -1;
-  return isAutoX(grid, solution, row, col) ? -1 : null;
+  return isQueensAutoX(grid, solution, row, col) ? -1 : null;
 };
 
 /** Root app component that manages active game state, puzzle data, and UI interactions. */
 function App() {
+  const [activeGame, setActiveGame] = useState<1 | 2>(1);
+  const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
+
   /** Guards to avoid duplicate puzzle generation under React StrictMode re-renders. */
   const sudokuGenerated = useRef(false);
   const queensGenerated = useRef(false);
-  /** Tracks drag-painting button state and context menu suppression for queens interactions. */
-  const activeMouseButton = useRef<number | null>(null);
-  const suppressContextMenu = useRef(false);
 
-  const [activeGame, setActiveGame] = useState<1 | 2>(1);
+  // --- Sudoku ---
+
   const [game, setGame] = useState<SudokuGame>(() => {
     if (sudokuGenerated.current) return emptySudoku();
     sudokuGenerated.current = true;
     return generatePuzzle();
   });
+
+  /** Selects a sudoku cell for entry. */
+  const handleSudokuCellClick = (row: number, col: number) => {
+    setSelectedCell({ row, col });
+  };
+
+  /** Writes a number into the selected editable sudoku cell. */
+  const handleSudokuNumberClick = (num: number) => {
+    if (selectedCell === null) return;
+    if (activeGame !== 1) return;
+    
+    // Only allow editing cells that were originally empty (not pre-filled ones)
+    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
+
+    setGame((prev) => ({
+      ...prev,
+      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, num),
+    }));
+  };
+
+  /** Clears the selected editable sudoku cell. */
+  const handleSudokuDeleteClick = () => {
+    if (selectedCell === null) return;
+    if (activeGame !== 1) return;
+    
+    // Only allow deleting cells that were originally empty (pre-filled cells cannot be deleted)
+    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
+
+    setGame((prev) => ({
+      ...prev,
+      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, null),
+    }));
+  };
+
+  /** Handles keyboard number entry and deletion for the active sudoku selection. */
+  useEffect(() => {
+    const handleSudokuKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Backspace" || event.key === "Delete") {
+        event.preventDefault();
+        handleSudokuDeleteClick();
+        return;
+      }
+      const num = Number(event.key);
+      if (num >= 1 && num <= 6) {
+        handleSudokuNumberClick(num);
+      }
+    };
+    window.addEventListener("keydown", handleSudokuKeyDown);
+    return () => window.removeEventListener("keydown", handleSudokuKeyDown);
+  });
+
+  // --- Queens ---
+
   const [queensGame, setQueensGame] = useState<QueensGame>(() => {
     if (queensGenerated.current) return emptyQueens();
     queensGenerated.current = true;
     return generateQueens();
   });
-  const [selectedCell, setSelectedCell] = useState<Coordinate | null>(null);
 
-  const puzzleSolved = activeGame === 1 ? isSudokuSolved(game) : isQueensSolved(queensGame);
+  /** Tracks drag-painting button state and context menu suppression for queens interactions. */
+  const queensActiveMouseButton = useRef<number | null>(null);
+  const queensSuppressContextMenu = useRef(false);
 
   /** Wires global mouse/context-menu listeners used for queens drag interactions. */
   useEffect(() => {
     const releaseMouse = () => {
-      activeMouseButton.current = null;
+      queensActiveMouseButton.current = null;
     };
     const clearSuppressedContextMenu = () => {
-      suppressContextMenu.current = false;
+      queensSuppressContextMenu.current = false;
     };
     const handleContextMenu = (event: globalThis.MouseEvent) => {
-      if (suppressContextMenu.current) {
+      if (queensSuppressContextMenu.current) {
         event.preventDefault();
-        suppressContextMenu.current = false;
+        queensSuppressContextMenu.current = false;
       }
     };
     window.addEventListener("mousedown", clearSuppressedContextMenu, true);
@@ -139,15 +194,14 @@ function App() {
     };
   }, []);
 
-  /** Selects a cell and applies queens mark toggling/placement rules when in queens mode. */
-  const handleCellClick = (row: number, col: number, mark: number) => {
+  /** Selects a cell and applies queens mark toggling/placement rules. */
+  const handleQueensCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
-    if (activeGame !== 2) return;
 
     setQueensGame((prev) => {
       const next = prev.puzzle.map((column) => [...column]);
-      const displayMark = getDisplayMark(prev.puzzle, prev.solution, row, col);
-      const autoMarked = isAutoX(prev.puzzle, prev.solution, row, col);
+      const displayMark = getQueensDisplayMark(prev.puzzle, prev.solution, row, col);
+      const autoMarked = isQueensAutoX(prev.puzzle, prev.solution, row, col);
 
       if (mark === 1) {
         if (displayMark === 1) {
@@ -202,71 +256,28 @@ function App() {
   };
 
   /** Prevents the browser context menu on queens cells. */
-  const handleCellContextMenu = (event: MouseEvent) => {
+  const handleQueensContextMenu = (event: MouseEvent) => {
     event.preventDefault();
   };
 
   /** Starts queens mark painting based on mouse button and updates the target cell. */
   const handleQueensMouseDown = (row: number, col: number, event: MouseEvent) => {
     if (event.button !== 2 && event.button !== 0) return;
-    activeMouseButton.current = event.button;
+    queensActiveMouseButton.current = event.button;
     if (event.button === 0) {
-      suppressContextMenu.current = true;
+      queensSuppressContextMenu.current = true;
     }
-    handleCellClick(row, col, event.button === 0 ? -1 : 1);
+    handleQueensCellClick(row, col, event.button === 0 ? -1 : 1);
   };
 
   /** Continues queens mark painting while dragging over cells. */
   const handleQueensMouseEnter = (row: number, col: number) => {
-    const button = activeMouseButton.current;
+    const button = queensActiveMouseButton.current;
     if (button === null) return;
-    handleCellClick(row, col, button === 0 ? -1 : 1);
+    handleQueensCellClick(row, col, button === 0 ? -1 : 1);
   };
 
-  /** Writes a number into the selected editable sudoku cell. */
-  const handleNumberClick = (num: number) => {
-    if (selectedCell === null) return;
-    if (activeGame !== 1) return;
-    
-    // Only allow editing cells that were originally empty (not pre-filled ones)
-    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
-
-    setGame((prev) => ({
-      ...prev,
-      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, num),
-    }));
-  };
-
-  /** Clears the selected editable sudoku cell. */
-  const handleDeleteClick = () => {
-    if (selectedCell === null) return;
-    if (activeGame !== 1) return;
-    
-    // Only allow deleting cells that were originally empty (pre-filled cells cannot be deleted)
-    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
-
-    setGame((prev) => ({
-      ...prev,
-      puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, null),
-    }));
-  };
-
-  /** Handles keyboard number entry and deletion for the active sudoku selection. */
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Backspace" || event.key === "Delete") {
-        event.preventDefault();
-        handleDeleteClick();
-        return;
-      }
-      const num = Number(event.key);
-      if (num >= 1 && num <= 6) {
-        handleNumberClick(num);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  });
+  const puzzleSolved = activeGame === 1 ? isSudokuSolved(game) : isQueensSolved(queensGame);
 
 
   
@@ -298,7 +309,7 @@ function App() {
                                 : ""
                             }`}
                             key={cellIndex}
-                            onClick={() => handleCellClick(row, col, 0)}
+                            onClick={() => handleSudokuCellClick(row, col)}
                           >
                             {getCell(game.puzzle, row, col) ?? ""}
                           </div>
@@ -314,7 +325,7 @@ function App() {
                 {[...Array(8)].map((_, row) =>
                   [...Array(8)].map((_, col) => {
                     const regionId = getQueensCell(queensGame.solution, row, col);
-                    const mark = getDisplayMark(queensGame.puzzle, queensGame.solution, row, col);
+                    const mark = getQueensDisplayMark(queensGame.puzzle, queensGame.solution, row, col);
                     return (
                       <div
                         className={`queens-cell region-${regionId}${
@@ -327,7 +338,7 @@ function App() {
                           handleQueensMouseDown(row, col, event)
                         }
                         onMouseEnter={() => handleQueensMouseEnter(row, col)}
-                        onContextMenu={handleCellContextMenu}
+                        onContextMenu={handleQueensContextMenu}
                       >
                         {mark === 1 ? (
                           <span className="mark-q">Q</span>
@@ -347,14 +358,14 @@ function App() {
                 <button
                   key={num}
                   className={`number-button${selectedCell !== null ? "" : " disabled"}`}
-                  onClick={() => handleNumberClick(num)}
+                  onClick={() => handleSudokuNumberClick(num)}
                 >
                   {num}
                 </button>
               ))}
               <button
                 className={`number-button${selectedCell !== null ? "" : " disabled"}`}
-                onClick={handleDeleteClick}
+                onClick={handleSudokuDeleteClick}
               >
                 ⌫
               </button>
