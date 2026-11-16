@@ -167,11 +167,14 @@ function App() {
   /** Tracks drag-painting button state and context menu suppression for queens interactions. */
   const queensActiveMouseButton = useRef<number | null>(null);
   const queensSuppressContextMenu = useRef(false);
+  /** Fixes the left-button drag gesture to either place or erase X marks for its duration. */
+  const queensDragMode = useRef<"place" | "erase" | null>(null);
 
   /** Wires global mouse/context-menu listeners used for queens drag interactions. */
   useEffect(() => {
     const releaseMouse = () => {
       queensActiveMouseButton.current = null;
+      queensDragMode.current = null;
     };
     const clearSuppressedContextMenu = () => {
       queensSuppressContextMenu.current = false;
@@ -194,7 +197,7 @@ function App() {
     };
   }, []);
 
-  /** Selects a cell and applies queens mark toggling/placement rules. */
+  /** Selects a cell and applies queens mark placement using the active drag mode. */
   const handleQueensCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
 
@@ -244,9 +247,12 @@ function App() {
           next[col][row] = 1;
         }
       } else if (mark === -1) {
-        if (displayMark === -1) {
-          next[col][row] = autoMarked ? 0 : null;
-        } else {
+        const mode = queensDragMode.current ?? (displayMark === -1 ? "erase" : "place");
+        if (mode === "erase") {
+          if (displayMark === -1) {
+            next[col][row] = autoMarked ? 0 : null;
+          }
+        } else if (displayMark !== -1) {
           next[col][row] = -1;
         }
       }
@@ -265,7 +271,11 @@ function App() {
     if (event.button !== 2 && event.button !== 0) return;
     queensActiveMouseButton.current = event.button;
     if (event.button === 0) {
+      const displayMark = getQueensDisplayMark(queensGame.puzzle, queensGame.solution, row, col);
+      queensDragMode.current = displayMark === -1 ? "erase" : "place";
       queensSuppressContextMenu.current = true;
+    } else {
+      queensDragMode.current = null;
     }
     handleQueensCellClick(row, col, event.button === 0 ? -1 : 1);
   };
