@@ -7,6 +7,7 @@ type Coordinate = [row: number, column: number];
 export interface SudokuGame {
   puzzle: Grid;
   solution: Grid;
+  initialState: Grid; // Tracks which cells were pre-filled (null for empty, number for given)
 }
 
 
@@ -49,7 +50,17 @@ export function generatePuzzle(): SudokuGame {
 
 					}
 				}
-				return { puzzle: grid, solution };
+				// Store the original grid state (this represents cells that were pre-filled)
+			const initialState = Array.from({ length: 6 }, () => Array(6).fill(null));
+			for (let i = 0; i < 6; i++) {
+				for (let j = 0; j < 6; j++) {
+					if (clearedCells[i][j] === false) {
+						initialState[i][j] = grid[i][j];
+					}
+				}
+			}
+
+			return { puzzle: grid, solution, initialState };
 			}
 		}
 	}
@@ -222,34 +233,33 @@ function doCorrectionAlgorithm(grid: Grid): boolean {
 }
 
 function getValidNextNumber(grid: Grid, row: number, column: number): number[] {
-	let allPossiblenumbers: number[] = [1, 2, 3, 4, 5, 6];
+  const invalidNumbers = new Set<number | null>();
 
-	for (let num = 1; num < 7; num++) {
-		//Check Row Validity
-		for (let col = 0; col < 6; col++) {
-			if (grid[row][col] === num){
-				allPossiblenumbers = allPossiblenumbers.filter((number) => number !== num)
-			}
-		}
-		//Check Column Validity
-		for (let ro = 0; ro < 6; ro++) {
-			if (grid[ro][column] === num){
-				allPossiblenumbers = allPossiblenumbers.filter((number) => number !== num)
-			}
-		}
-		//Get Initial TopLeft Index of Box
-		let rowI: number = Math.floor((row) / 2) * 2
-		let colI: number = Math.floor((column) / 3) * 3
-		//Check Box Validity
-		for (let ro = rowI; ro < rowI + 2; ro++) {
-			for (let col = colI; col < colI + 3; col++) {
-				if (grid[ro][col] === num){
-					allPossiblenumbers = allPossiblenumbers.filter((number) => number !== num)
-				}
-			}
-		}
-	}
-	return allPossiblenumbers;
+  // Check Row Validity
+  for (let col = 0; col < 6; col++) {
+    if (grid[row][col] !== null && grid[row][col] !== undefined) {
+      invalidNumbers.add(grid[row][col]);
+    }
+  }
+  // Check Column Validity
+  for (let ro = 0; ro < 6; ro++) {
+    if (grid[ro][column] !== null && grid[ro][column] !== undefined) {
+      invalidNumbers.add(grid[ro][column]);
+    }
+  }
+  // Check Box Validity
+  let rowI: number = Math.floor((row) / 2) * 2;
+  let colI: number = Math.floor((column) / 3) * 3;
+  for (let ro = rowI; ro < rowI + 2; ro++) {
+    for (let col = colI; col < colI + 3; col++) {
+      if (grid[ro][col] !== null && grid[ro][col] !== undefined) {
+        invalidNumbers.add(grid[ro][col]);
+      }
+    }
+  }
+
+  // Convert set to array and filter from initial range
+  return [1, 2, 3, 4, 5, 6].filter((num) => !invalidNumbers.has(num));
 }
 
 function getMyBox(coordinate: Coordinate): number{
@@ -347,4 +357,10 @@ export const setCell = (grid: Grid, row: number, col: number, value: number | nu
   const next = grid.map((r) => [...r]);
   next[row][col] = value;
   return next;
+};
+
+export const isCellEditable = (game: SudokuGame, row: number, col: number): boolean => {
+  const cellValue = game.initialState[row][col];
+  // Cell is editable if it was originally empty (null in initialState)
+  return cellValue === null;
 };

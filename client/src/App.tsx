@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import "./App.css";
-import { SudokuGame, generatePuzzle, getCell, setCell, isSolved as isSudokuSolved } from "./sudoku/SudokuLogic";
+import { SudokuGame, generatePuzzle, getCell, setCell, isSolved as isSudokuSolved, isCellEditable } from "./sudoku/SudokuLogic";
 import {
   QueensGame,
   generatePuzzle as generateQueens,
@@ -16,6 +16,7 @@ const emptyGrid = (size: number) =>
 const emptySudoku = (): SudokuGame => ({
   puzzle: emptyGrid(6),
   solution: emptyGrid(6),
+  initialState: emptyGrid(6),
 });
 
 const emptyQueens = (): QueensGame => ({
@@ -211,6 +212,10 @@ function App() {
   const handleNumberClick = (num: number) => {
     if (selectedCell === null) return;
     if (activeGame !== 1) return;
+    
+    // Only allow editing cells that were originally empty (not pre-filled ones)
+    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
+
     setGame((prev) => ({
       ...prev,
       puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, num),
@@ -220,6 +225,10 @@ function App() {
   const handleDeleteClick = () => {
     if (selectedCell === null) return;
     if (activeGame !== 1) return;
+    
+    // Only allow deleting cells that were originally empty (pre-filled cells cannot be deleted)
+    if (!isCellEditable(game, selectedCell.row, selectedCell.col)) return;
+
     setGame((prev) => ({
       ...prev,
       puzzle: setCell(prev.puzzle, selectedCell.row, selectedCell.col, null),
