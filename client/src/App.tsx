@@ -8,22 +8,27 @@ import {
   isSolved as isQueensSolved,
 } from "./queens/QueensLogic";
 
+/** UI cell coordinate in row/column form. */
 type Coordinate = { row: number; col: number };
 
+/** Creates an empty square grid filled with nulls. */
 const emptyGrid = (size: number) =>
   Array.from({ length: size }, () => Array<number | null>(size).fill(null));
 
+/** Returns an empty 6x6 sudoku game state placeholder. */
 const emptySudoku = (): SudokuGame => ({
   puzzle: emptyGrid(6),
   solution: emptyGrid(6),
   initialState: emptyGrid(6),
 });
 
+/** Returns an empty 8x8 queens game state placeholder. */
 const emptyQueens = (): QueensGame => ({
   puzzle: emptyGrid(8),
   solution: emptyGrid(8),
 });
 
+/** Determines whether a queens cell is implicitly blocked by another placed queen. */
 const isAutoX = (
   grid: (number | null)[][],
   solution: (number | null)[][],
@@ -70,6 +75,7 @@ const isAutoX = (
   return false;
 };
 
+/** Resolves the visible queens mark, preferring manual marks over inferred auto-X markers. */
 const getDisplayMark = (
   grid: (number | null)[][],
   solution: (number | null)[][],
@@ -83,9 +89,12 @@ const getDisplayMark = (
   return isAutoX(grid, solution, row, col) ? -1 : null;
 };
 
+/** Root app component that manages active game state, puzzle data, and UI interactions. */
 function App() {
+  /** Guards to avoid duplicate puzzle generation under React StrictMode re-renders. */
   const sudokuGenerated = useRef(false);
   const queensGenerated = useRef(false);
+  /** Tracks drag-painting button state and context menu suppression for queens interactions. */
   const activeMouseButton = useRef<number | null>(null);
   const suppressContextMenu = useRef(false);
 
@@ -104,6 +113,7 @@ function App() {
 
   const puzzleSolved = activeGame === 1 ? isSudokuSolved(game) : isQueensSolved(queensGame);
 
+  /** Wires global mouse/context-menu listeners used for queens drag interactions. */
   useEffect(() => {
     const releaseMouse = () => {
       activeMouseButton.current = null;
@@ -129,6 +139,7 @@ function App() {
     };
   }, []);
 
+  /** Selects a cell and applies queens mark toggling/placement rules when in queens mode. */
   const handleCellClick = (row: number, col: number, mark: number) => {
     setSelectedCell({ row, col });
     if (activeGame !== 2) return;
@@ -190,10 +201,12 @@ function App() {
     });
   };
 
+  /** Prevents the browser context menu on queens cells. */
   const handleCellContextMenu = (event: MouseEvent) => {
     event.preventDefault();
   };
 
+  /** Starts queens mark painting based on mouse button and updates the target cell. */
   const handleQueensMouseDown = (row: number, col: number, event: MouseEvent) => {
     if (event.button !== 2 && event.button !== 0) return;
     activeMouseButton.current = event.button;
@@ -203,12 +216,14 @@ function App() {
     handleCellClick(row, col, event.button === 0 ? -1 : 1);
   };
 
+  /** Continues queens mark painting while dragging over cells. */
   const handleQueensMouseEnter = (row: number, col: number) => {
     const button = activeMouseButton.current;
     if (button === null) return;
     handleCellClick(row, col, button === 0 ? -1 : 1);
   };
 
+  /** Writes a number into the selected editable sudoku cell. */
   const handleNumberClick = (num: number) => {
     if (selectedCell === null) return;
     if (activeGame !== 1) return;
@@ -222,6 +237,7 @@ function App() {
     }));
   };
 
+  /** Clears the selected editable sudoku cell. */
   const handleDeleteClick = () => {
     if (selectedCell === null) return;
     if (activeGame !== 1) return;
@@ -235,6 +251,7 @@ function App() {
     }));
   };
 
+  /** Handles keyboard number entry and deletion for the active sudoku selection. */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Backspace" || event.key === "Delete") {
@@ -251,6 +268,8 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
+
+  
   return (
     <>
       <header className="header">
