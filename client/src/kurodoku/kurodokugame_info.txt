@@ -1,0 +1,21 @@
+Kurodoku (Kuromasu) is a binary-determination logic puzzle published by Nikoli.
+
+Rules
+-----
+1. Fill cells black or white according to these rules:
+   - Each number represents the count of white cells visible from that cell (including itself)
+   - Numbered cells must always be white
+   - No two black cells may be horizontally or vertically adjacent
+   - All white cells must be connected horizontally or vertically
+
+2. A cell is visible from another cell if:
+   - Both are in the same row or column
+   - There are no black cells between them in that row/column
+
+3. Each puzzle has exactly one unique solution.
+
+Notation
+--------
+- Black cells: filled/shaded
+- White cells: empty/unshaded
+- Numbered cells: always white (never black)

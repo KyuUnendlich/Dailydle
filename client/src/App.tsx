@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import "./App.css";
-import { SudokuGame, generatePuzzle, getCell, setCell, isSolved as isSudokuSolved } from "./SudokuLogic";
+import { SudokuGame, generatePuzzle, getCell, setCell, isSolved as isSudokuSolved } from "./sudoku/SudokuLogic";
 import {
   QueensGame,
   generatePuzzle as generateQueens,
   getCell as getQueensCell,
   isSolved as isQueensSolved,
-} from "./QueensLogic";
+} from "./queens/QueensLogic";
 
 type Coordinate = { row: number; col: number };
 

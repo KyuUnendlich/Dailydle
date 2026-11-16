@@ -1,0 +1,20 @@
+Queens is a logic puzzle played on an 8x8 grid.
+
+Goal
+----
+Place 8 queens on the board so that each row, each column, and each colored region contains exactly one queen.
+
+Rules
+-----
+1. One queen in every row.
+2. One queen in every column.
+3. One queen in every colored region.
+4. No two queens may be diagonally adjacent to each other.
+
+A queen blocks its entire row and column, but only the four immediately touching diagonal squares (not the entire diagonal line).
+
+Notation
+--------
+- Queen cells: marked with "Q"
+- X marks: indicate a cell that cannot contain a queen (auto-detected or manually placed)
+- Empty cells: unknown/unmarked
