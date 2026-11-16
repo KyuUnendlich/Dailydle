@@ -195,18 +195,18 @@ function App() {
   };
 
   const handleQueensMouseDown = (row: number, col: number, event: MouseEvent) => {
-    if (event.button !== 0 && event.button !== 2) return;
+    if (event.button !== 2 && event.button !== 0) return;
     activeMouseButton.current = event.button;
-    if (event.button === 2) {
+    if (event.button === 0) {
       suppressContextMenu.current = true;
     }
-    handleCellClick(row, col, event.button === 2 ? -1 : 1);
+    handleCellClick(row, col, event.button === 0 ? -1 : 1);
   };
 
   const handleQueensMouseEnter = (row: number, col: number) => {
     const button = activeMouseButton.current;
     if (button === null) return;
-    handleCellClick(row, col, button === 2 ? -1 : 1);
+    handleCellClick(row, col, button === 0 ? -1 : 1);
   };
 
   const handleNumberClick = (num: number) => {
